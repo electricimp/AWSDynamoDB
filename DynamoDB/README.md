@@ -21,126 +21,126 @@ All parameters are strings. Access keys can be generated with IAM.
 
 http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html
 
-       Parameter       |       Type     | Description
+ Parameter       |       Type     | Description
 ---------------------- | -------------- | -----------
-**params** | table         | Table of parameters (See APIReference)
+**params** | table         | Table of parameters (See API Reference)
 **cb**                 | function       | Callback function that takes one parameter (a response table)
 
 ### BatchWriteItem(params, cb)
 
 http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchWriteItem.html
 
-       Parameter       |       Type     | Description
+ Parameter       |       Type     | Description
 ---------------------- | -------------- | -----------
-**params** | table         | Table of parameters (See APIReference)
+**params** | table         | Table of parameters (See API Reference)
 **cb**                 | function       | Callback function that takes one parameter (a response table)
 
 ### CreateTable(params, cb)
 
 http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_CreateTable.html
 
-       Parameter       |       Type     | Description
+ Parameter       |       Type     | Description
 ---------------------- | -------------- | -----------
-**params** | table         | Table of parameters (See APIReference)
+**params** | table         | Table of parameters (See API Reference)
 **cb**                 | function       | Callback function that takes one parameter (a response table)
 
 ### DeleteItem(params, cb)
 
 http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteItem.html
 
-       Parameter       |       Type     | Description
+ Parameter       |       Type     | Description
 ---------------------- | -------------- | -----------
-**params** | table         | Table of parameters (See APIReference)
+**params** | table         | Table of parameters (See API Reference)
 **cb**                 | function       | Callback function that takes one parameter (a response table)
 
 ### DeleteTable(params, cb)
 
 http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteTable.html
 
-       Parameter       |       Type     | Description
+ Parameter       |       Type     | Description
 ---------------------- | -------------- | -----------
-**params** | table         | Table of parameters (See APIReference)
+**params** | table         | Table of parameters (See API Reference)
 **cb**                 | function       | Callback function that takes one parameter (a response table)
 
 ### DescribeLimits(params, cb)
 
 http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeLimits.html
 
-       Parameter       |       Type     | Description
+ Parameter       |       Type     | Description
 ---------------------- | -------------- | -----------
-**params** | table         | Table of parameters (See APIReference)
+**params** | table         | Table of parameters (See API Reference)
 **cb**                 | function       | Callback function that takes one parameter (a response table)
 
 ### DescribeTable(params, cb)
 
 http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeTable.html
 
-       Parameter       |       Type     | Description
+ Parameter       |       Type     | Description
 ---------------------- | -------------- | -----------
-**params** | table         | Table of parameters (See APIReference)
+**params** | table         | Table of parameters (See API Reference)
 **cb**                 | function       | Callback function that takes one parameter (a response table)
 
 ### GetItem(params, cb)
 
 http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_GetItem.html
 
-       Parameter       |       Type     | Description
+ Parameter       |       Type     | Description
 ---------------------- | -------------- | -----------
-**params** | table         | Table of parameters (See APIReference)
+**params** | table         | Table of parameters (See API Reference)
 **cb**                 | function       | Callback function that takes one parameter (a response table)
 
 ### ListTables(params, cb)
 
 http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ListTables.html
 
-       Parameter       |       Type     | Description
+ Parameter       |       Type     | Description
 ---------------------- | -------------- | -----------
-**params** | table         | Table of parameters (See APIReference)
+**params** | table         | Table of parameters (See API Reference)
 **cb**                 | function       | Callback function that takes one parameter (a response table)
 
 ### PutItem(params, cb)
 
 http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_PutItem.html
 
-       Parameter       |       Type     | Description
+ Parameter       |       Type     | Description
 ---------------------- | -------------- | -----------
-**params** | table         | Table of parameters (See APIReference)
+**params** | table         | Table of parameters (See API Reference)
 **cb**                 | function       | Callback function that takes one parameter (a response table)
 
 ### Query(params, cb)
 
 http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html
 
-       Parameter       |       Type     | Description
+ Parameter       |       Type     | Description
 ---------------------- | -------------- | -----------
-**params** | table         | Table of parameters (See APIReference)
+**params** | table         | Table of parameters (See API Reference)
 **cb**                 | function       | Callback function that takes one parameter (a response table)
 
 ### Scan(params, cb)
 
 http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html
 
-       Parameter       |       Type     | Description
+ Parameter       |       Type     | Description
 ---------------------- | -------------- | -----------
-**params** | table         | Table of parameters (See APIReference)
+**params** | table         | Table of parameters (See API Reference)
 **cb**                 | function       | Callback function that takes one parameter (a response table)
 
 ### UpdateItem(params, cb)
 
 http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html
 
-       Parameter       |       Type     | Description
+ Parameter       |       Type     | Description
 ---------------------- | -------------- | -----------
-**params** | table         | Table of parameters (See APIReference)
+**params** | table         | Table of parameters (See API Reference)
 **cb**                 | function       | Callback function that takes one parameter (a response table)
 
 ### UpdateTable(params, cb)
 
 http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateTable.html
 
-       Parameter       |       Type     | Description
+ Parameter       |       Type     | Description
 ---------------------- | -------------- | -----------
-**params** | table         | Table of parameters (See APIReference)
+**params** | table         | Table of parameters (See API Reference)
 **cb**                 | function       | Callback function that takes one parameter (a response table)
 
 
