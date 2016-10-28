@@ -25,8 +25,18 @@ class AWSSNS {
      * @param {function} cb
      */
     function ConfirmSubscription(params, cb) {
-        local headers = { "X-Amz-Target": format("%s.ConfirmSubscription", TARGET_PREFIX) };
-        _awsRequest.post("/", headers, http.jsonencode(params), cb);
+        local headers = { "Content-Type": "application/x-www-form-urlencoded" };
+
+        local body = {
+            "Action": "ConfirmSubscription",
+            "Version": "2010-03-31"
+        };
+
+        foreach (k,v in params) {
+            body[k] <- v;
+        }
+
+        _awsRequest.post("/", headers, http.urlencode(body), cb);
     }
 
     /**
@@ -34,8 +44,18 @@ class AWSSNS {
      * @param {function} cb
      */
     function ListSubscriptions(params, cb) {
-        local headers = { "X-Amz-Target": format("%s.ListSubscriptions", TARGET_PREFIX) };
-        _awsRequest.post("/", headers, http.jsonencode(params), cb);
+        local headers = { "Content-Type": "application/x-www-form-urlencoded" };
+
+        local body = {
+            "Action": "ListSubscriptions",
+            "Version": "2010-03-31"
+        };
+
+        foreach (k,v in params) {
+            body[k] <- v;
+        }
+
+        _awsRequest.post("/", headers, http.urlencode(body), cb);
     }
 
     /**
@@ -43,8 +63,18 @@ class AWSSNS {
      * @param {function} cb
      */
     function ListSubscriptionsByTopic(params, cb) {
-        local headers = { "X-Amz-Target": format("%s.ListSubscriptionsByTopic", TARGET_PREFIX) };
-        _awsRequest.post("/", headers, http.jsonencode(params), cb);
+        local headers = { "Content-Type": "application/x-www-form-urlencoded" };
+
+        local body = {
+            "Action": "ListSubscriptionsByTopic",
+            "Version": "2010-03-31"
+        };
+
+        foreach (k,v in params) {
+            body[k] <- v;
+        }
+
+        _awsRequest.post("/", headers, http.urlencode(body), cb);
     }
 
     /**
@@ -52,8 +82,18 @@ class AWSSNS {
      * @param {function} cb
      */
     function ListTopics(params, cb) {
-        local headers = { "X-Amz-Target": format("%s.ListTopics", TARGET_PREFIX) };
-        _awsRequest.post("/", headers, http.jsonencode(params), cb);
+        local headers = { "Content-Type": "application/x-www-form-urlencoded" };
+
+        local body = {
+            "Action": "ListTopics",
+            "Version": "2010-03-31"
+        };
+
+        foreach (k,v in params) {
+            body[k] <- v;
+        }
+
+        _awsRequest.post("/", headers, http.urlencode(body), cb);
     }
 
     /**
@@ -61,8 +101,18 @@ class AWSSNS {
      * @param {function} cb
      */
     function Publish(params, cb) {
-        local headers = { "X-Amz-Target": format("%s.Publish", TARGET_PREFIX) };
-        _awsRequest.post("/", headers, http.jsonencode(params), cb);
+        local headers = { "Content-Type": "application/x-www-form-urlencoded" };
+
+        local body = {
+            "Action": "Publish",
+            "Version": "2010-03-31"
+        };
+
+        foreach (k,v in params) {
+            body[k] <- v;
+        }
+
+        _awsRequest.post("/", headers, http.urlencode(body), cb);
     }
 
     /**
@@ -70,8 +120,18 @@ class AWSSNS {
      * @param {function} cb
      */
     function Subscribe(params, cb) {
-        local headers = { "X-Amz-Target": format("%s.Subscribe", TARGET_PREFIX) };
-        _awsRequest.post("/", headers, http.jsonencode(params), cb);
+        local headers = { "Content-Type": "application/x-www-form-urlencoded" };
+
+        local body = {
+            "Action": "Subscribe",
+            "Version": "2010-03-31"
+        };
+
+        foreach (k,v in params) {
+            body[k] <- v;
+        }
+
+        _awsRequest.post("/", headers, http.urlencode(body), cb);
     }
 
     /**
@@ -79,8 +139,18 @@ class AWSSNS {
      * @param {function} cb
      */
     function Unsubscribe(params, cb) {
-        local headers = { "X-Amz-Target": format("%s.Unsubscribe", TARGET_PREFIX) };
-        _awsRequest.post("/", headers, http.jsonencode(params), cb);
+        local headers = { "Content-Type": "application/x-www-form-urlencoded" };
+
+        local body = {
+            "Action": "Unsubscribe",
+            "Version": "2010-03-31"
+        };
+
+        foreach (k,v in params) {
+            body[k] <- v;
+        }
+
+        _awsRequest.post("/", headers, http.urlencode(body), cb);
     }
 
 }
