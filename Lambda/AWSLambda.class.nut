@@ -4,7 +4,6 @@ class AWSLambda {
 
 	static SERVICE = "lambda";
     static URL_PREFIX = "/2015-03-31/functions/";
-    static TARGET_PREFIX = "Lambda_20150331";
 
 	_awsRequest = null;
 
@@ -31,7 +30,7 @@ class AWSLambda {
             contenttype = "application/json";
         }
 
-        local headers = {"Content-Type": contenttype, "X-Amz-Target": format("%s.InvokeFunction", TARGET_PREFIX) };
+    local headers = {"Content-Type": contenttype };
         local body = (contenttype == "application/json") ? http.jsonencode(params.Payload) : params.Payload;
         _awsRequest.post(URL_PREFIX + params.FunctionName + "/invocations", headers, body, cb);
     }

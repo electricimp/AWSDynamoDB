@@ -21,9 +21,9 @@ All parameters are strings. Access keys can be generated with IAM.
 
 http://docs.aws.amazon.com/lambda/latest/dg/API_Invoke.html
 
- Parameter       |       Type     | Description
+ Parameter             | Type           | Description
 ---------------------- | -------------- | -----------
-**params** | table         | Table of parameters (See API Reference)
+**params**             | table          | Table of parameters (See API Reference)
 **cb**                 | function       | Callback function that takes one parameter (a response table)
 
 ## Example
@@ -36,4 +36,16 @@ const ACCESS_KEY_ID = "YOUR_KEY_ID_HERE";
 const SECRET_ACCESS_KEY = "YOUR_KEY_HERE";
 
 lambda <- AWSLambda("us-west-2", ACCESS_KEY_ID, SECRET_ACCESS_KEY);
+
+// Invoke function
+params <- {
+    "FunctionName": "testFunction",
+    "Payload": {
+        "test": "Function invoked by " + imp.configparams.deviceid
+    }
+}
+
+lambda.Invoke(params, function(res) {
+    server.log(http.jsonencode(res));
+});
 ```
