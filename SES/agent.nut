@@ -21,7 +21,6 @@ body <- "This is a test email for AWS SES.";
 
 ses <- AWSSES(AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY);
 
-ses.sendEmail(to, from, subject, body function(res) {
+ses.SendEmail(to, from, subject, body function(res) {
     server.log(http.jsonencode(res));
 });
-

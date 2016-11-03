@@ -4,7 +4,7 @@
 
 #require "PrettyPrinter.class.nut:1.0.1"
 #require "AWSRequestV4.class.nut:1.0.2"
-#include "AWSDynamoDB.class.nut"
+#include "AWSCloudWatchLogs.class.nut"
 
 // Setup DynamoDB
 AWS_REGION     <- "us-west-2";
@@ -19,23 +19,14 @@ AWS_SECRET_KEY <- "1xB0ssJbuX6J0NXfx8KZsUGHR6f43wtIWrwGWHUp";
 pp <- PrettyPrinter(null, 4);
 print <- pp.print.bindenv(pp);
 
-db <- AWSDynamoDB(AWS_REGION, AWS_ACCESS_KEY, AWS_SECRET_KEY);
+logs <- AWSCloudWatchLogs(AWS_REGION, AWS_ACCESS_KEY, AWS_SECRET_KEY);
 
+// Create Log Stream
 params <- {
-	"TableName": "testTable",
-	"Item": {
-		"deviceId": {
-			"S": imp.configparams.deviceid
-		},
-		"time": {
-			"S": time().tostring()
-		},
-		"status": {
-			"BOOL": true
-		}
-	}
+	"logGroupName": "testLogGroup",
+	"logStreamName": "testLogStream"
 }
 
-db.PutItem(params, function(res) {
+logs.CreateLogStream(params, function(res) {
 	print(res);
 });

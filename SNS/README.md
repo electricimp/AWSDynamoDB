@@ -9,7 +9,7 @@ To add this library to your model, add the following lines to the top of your ag
 
 **Note: [AWSRequestV4](https://github.com/electricimp/AWSRequestV4/) must be loaded.**
 
-This class can be used to perform actions on the AWS SNS servive. E.g. subscribing to topics, unsubscribing from topics, publishing messages.
+This class can be used to perform actions on the AWS SNS service. E.g. subscribing to topics, unsubscribing from topics, publishing messages.
 
 ## Class Methods
 

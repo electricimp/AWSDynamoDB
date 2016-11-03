@@ -57,10 +57,10 @@ http://docs.aws.amazon.com/sqs/latest/api/API_SendMessage.html
 
 http://docs.aws.amazon.com/sqs/latest/api/API_SendMessageBatch.html
 
- Parameter       |       Type     | Description
+ Parameter             | Type           | Description
 ---------------------- | -------------- | -----------
-**params** | table         | Table of parameters (See API Reference)
-**cb**                 | function       | Callback function that takes one parameter (a response table)
+**params** | table     | Table of parameters (See API Reference)
+**cb**     | function  | Callback function that takes one parameter (a response table)
 
 
 ## Example
@@ -74,4 +74,20 @@ const SECRET_ACCESS_KEY = "YOUR_KEY_HERE";
 
 sqs <- AWSSQS("us-west-2", ACCESS_KEY_ID, SECRET_ACCESS_KEY);
 
+// Send Message
+sendParams <- {
+    "QueueUrl": "YOUR_URL_HERE",
+    "MessageBody": "testMessage"
+}
+sqs.SendMessage(sendParams, function(res) {
+    server.log(http.jsonencode(res));
+});
+
+// Receive Message
+receiveParams <- {
+    "QueueUrl": "YOUR_URL_HERE"
+}
+sqs.ReceiveMessage(receiveParams, function(res) {
+    server.log(http.jsonencode(res));
+});
 ```

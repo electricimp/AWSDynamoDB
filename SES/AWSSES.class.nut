@@ -16,8 +16,39 @@ class AWSSES {
 
 	}
 
+
+	function SendEmail(toAddresses, fromAddress, subject, message, cb) {
+        local headers = { "Content-Type": "application/x-www-form-urlencoded" };
+
+        local body = {
+            "Action": "SendEmail",
+            "Version": "2010-12-01"
+			"Destination": {
+				"toAddresses": toAddresses
+			},
+			"Message": {
+				"Body": {
+					"Text": {
+						"Data": message
+					}
+				},
+				"Subject": {
+					"Data": subject
+				}
+			},
+			"Source": fromAddress
+        };
+
+        _awsRequest.post("/", headers, http.urlencode(body), cb);
+	}
+
+
+	/*----------- OLD FUNCTIONS -------------*/
+
+	// Send Email
 	//-----------------------
-	function sendEmail(toAddresses, fromAddress, subject, body, cb=null) {
+	/*
+	function SendEmail(toAddresses, fromAddress, subject, body, cb=null) {
 
 		local headers = { "X-Amz-Target": format("%s.SendEmail", TARGET_PREFIX) };
 
@@ -41,6 +72,7 @@ class AWSSES {
 		_awsRequest.post("/", headers, http.jsonencode(body), cb);
 
 	}
+	*/
 
 	// Send Raw Email
 	//-----------------------

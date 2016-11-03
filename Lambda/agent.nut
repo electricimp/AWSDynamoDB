@@ -20,3 +20,15 @@ AWS_ACCESS_KEY <- "AKIAILHSWHF6ILS72R3A";
 AWS_SECRET_KEY <- "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";
 
 lambda <- AWSLambda(AWS_REGION, AWS_ACCESS_KEY, AWS_SECRET_KEY);
+
+// Invoke function
+params <- {
+    "FunctionName": "testFunction",
+    "Payload": {
+        "test": "Function invoked by " + imp.configparams.deviceid
+    }
+}
+
+lambda.Invoke(params, function(res) {
+    server.log(http.jsonencode(res));
+});
