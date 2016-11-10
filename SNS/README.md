@@ -131,3 +131,7 @@ sns.Subscribe(subscribeParams, function(res) {
     server.log("Subscribe Response: " + http.jsonencode(res));
 });
 ```
+
+# License
+
+The AWSSNS library is licensed under the [MIT License](https://github.com/electricimp/thethingsapi/tree/master/LICENSE).

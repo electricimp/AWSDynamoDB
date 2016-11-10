@@ -49,3 +49,7 @@ lambda.Invoke(params, function(res) {
     server.log(http.jsonencode(res));
 });
 ```
+
+# License
+
+The AWSLambda library is licensed under the [MIT License](https://github.com/electricimp/thethingsapi/tree/master/LICENSE).

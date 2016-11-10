@@ -191,3 +191,7 @@ db.GetItem(getParams, function(response) {
     server.log("Data:" + http.jsonencode(response.body.Item));    
 });
 ```
+
+# License
+
+The AWSCloudWatchLogs library is licensed under the [MIT License](https://github.com/electricimp/thethingsapi/tree/master/LICENSE).
