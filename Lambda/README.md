@@ -9,7 +9,7 @@ To add this library to your model, add the following lines to the top of your ag
 
 **Note: [AWSRequestV4](https://github.com/electricimp/AWSRequestV4/) must be loaded.**
 
-This class can be used to perform actions on Lambda functions.
+This class can be used to invoke Lambda functions.
 
 ## Class Methods
 
