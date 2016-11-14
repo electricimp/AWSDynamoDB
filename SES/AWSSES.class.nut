@@ -22,8 +22,13 @@ class AWSSES {
 	}
 
 
-	function SendEmail(toAddresses, fromAddress, subject, message, cb) {
+	function SendEmail(toAddresses, fromAddress, subject, message, format, cb) {
         local headers = { "Content-Type": "application/x-www-form-urlencoded" };
+
+		if (typeof format == "function") {
+			cb = format;
+			format = "Text";
+		}
 
         local body = {
             "Action": "SendEmail",
@@ -33,7 +38,7 @@ class AWSSES {
 			},
 			"Message": {
 				"Body": {
-					"Text": {
+					format: {
 						"Data": message
 					}
 				},

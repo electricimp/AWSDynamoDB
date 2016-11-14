@@ -1,5 +1,7 @@
 # AWSDynamoDB
 
+**This library is a work in progress and does not yet work.**
+
 To add this library to your model, add the following lines to the top of your agent code:
 
 ```
@@ -151,7 +153,7 @@ http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateTable.ht
 #require "AWSDynamoDB.class.nut:1.0.0"
 
 const ACCESS_KEY_ID = "YOUR_KEY_ID_HERE";
-const SECRET_ACCESS_KEY = "YOUR_KEY_HERE";
+const SECRET_ACCESS_KEY = "YOUR_SECRET_KEY_HERE";
 
 db <- AWSDynamoDB("us-west-2", ACCESS_KEY_ID, SECRET_ACCESS_KEY);
 deviceId <- imp.configparams.deviceid;
