@@ -48,7 +48,7 @@ const AWS_ERROR_LIMIT_100 = "1 validation error detected: Value '200' at 'limit'
 // info messages
 const AWS_TEST_WAITING_FOR_TABLE = "Table not created yet. Waiting 5 seconds before starting tests..."
 
-class DynamoDBTest extends ImpTestCase {
+class DynamoDBPositiveTest extends ImpTestCase {
 
     _db = null;
     _tablename = null;
@@ -120,8 +120,6 @@ class DynamoDBTest extends ImpTestCase {
         }.bindenv(this));
     }
 
-
-
     // To be called by the setup() method
     // waits until table is active e.g finished creating then calls cb
     function checkTable(params, cb) {
@@ -143,77 +141,6 @@ class DynamoDBTest extends ImpTestCase {
             }
         }.bindenv(this));
     }
-
-
-
-    // Checking that putting an item in a non-existent table returns
-    // a http status 400 and the correct error message reveived from aws
-    function testFailPutItem() {
-
-        local params = {
-            "TableName": AWS_TEST_FAKE_TABLE_NAME,
-            "Item": {
-                "deviceId": {
-                    "S": imp.configparams.deviceid
-                },
-                "time": {
-                    "S": time().tostring()
-                },
-                "status": {
-                    "BOOL": true
-                }
-            }
-        };
-        return Promise(function(resolve, reject) {
-
-            _db.putItem(params, function(res) {
-
-                try {
-                    this.assertTrue(res.statuscode == AWS_TEST_HTTP_RESPONSE_BAD_REQUEST, "Actual status: " + res.statuscode);
-                    this.assertTrue(AWS_ERROR_REOSOURCE_NOT_FOUND == http.jsondecode(res.body).message, http.jsondecode(res.body).message)
-                    resolve("did not put item in non existent table");
-                } catch (e) {
-                    reject(e);
-                }
-            }.bindenv(this));
-        }.bindenv(this));
-    }
-
-
-
-    // Checking that putting a number in as string throws an error
-    // a http status 400 and the correct error message from aws
-    function testFailGeItem() {
-        local getParams = {
-            "Key": {
-                "deviceId": {
-                    "S": imp.configparams.deviceid
-                },
-                "time": {
-                    "S": AWS_TEST_FAKE_TIME
-                }
-            },
-            "TableName": _tablename,
-            "AttributesToGet": [
-                "time", "status"
-            ],
-            "ConsistentRead": false
-        };
-        return Promise(function(resolve, reject) {
-
-            _db.getItem(getParams, function(res) {
-
-                try {
-                    this.assertTrue(res.statuscode == AWS_TEST_HTTP_RESPONSE_BAD_REQUEST, "Actual status: " + res.statuscode);
-                    this.assertTrue(http.jsondecode(res.body).Message == AWS_ERROR_CONVERT_TO_STRING)
-                    resolve("did not put item in non existent table");
-                } catch (e) {
-                    reject(e);
-                }
-            }.bindenv(this));
-        }.bindenv(this));
-    }
-
 
     // Test putting a item in a table then retrieving it via a get
     // specifically checking the time at which the item is put in is stored
@@ -276,8 +203,6 @@ class DynamoDBTest extends ImpTestCase {
 
         }.bindenv(this));
     }
-
-
 
     // Add a new item to an existing table
     // Check that response contains the correct value added in the returned Attributes section
@@ -344,8 +269,6 @@ class DynamoDBTest extends ImpTestCase {
         }.bindenv(this));
     }
 
-
-
     // Deletes an item
     // checks the http response code indicating a successful response
     function testDeleteItem() {
@@ -398,8 +321,6 @@ class DynamoDBTest extends ImpTestCase {
             }.bindenv(this));
         }.bindenv(this));
     }
-
-
 
     // create a specific table called testTable wait for it to be created.
     // Then write a batch message to it.
@@ -462,8 +383,6 @@ class DynamoDBTest extends ImpTestCase {
             }.bindenv(this));
         }.bindenv(this));
     }
-
-
 
     // create a specific table called testTable2 wait for it to be created.
     // Then write a batch message to it.
@@ -571,8 +490,6 @@ class DynamoDBTest extends ImpTestCase {
         }.bindenv(this));
     }
 
-
-
     // Test create a table, checks that the tablename, keyschema and
     // attribute definitions of created table match
     function testCreateTable() {
@@ -609,8 +526,6 @@ class DynamoDBTest extends ImpTestCase {
         }.bindenv(this));
     }
 
-
-
     // Method to cleanup after testCreateTable()
     function afterCreateTable(tableName, cb) {
         local params = {
@@ -643,8 +558,6 @@ class DynamoDBTest extends ImpTestCase {
         }.bindenv(this));
     }
 
-
-
     // Obtains a description of a table checks that the returned tableName is the one that we were checking for
     // also check for keyschema and AttributeDefinitions
     function testDescribeTable() {
@@ -668,33 +581,6 @@ class DynamoDBTest extends ImpTestCase {
             }.bindenv(this));
         }.bindenv(this));
     }
-
-
-
-    // Try to update table without the tablename parameter
-    function testFailUpdateTable() {
-        local params = {
-            "ProvisionedThroughput": {
-                "ReadCapacityUnits": 6,
-                "WriteCapacityUnits": 6
-            }
-        };
-        return Promise(function(resolve, reject) {
-
-            _db.updateTable(params, function(res) {
-
-                try {
-                    this.assertTrue(res.statuscode == AWS_TEST_HTTP_RESPONSE_BAD_REQUEST, res.statuscode)
-                    this.assertTrue(http.jsondecode(res.body).message == AWS_ERROR_PARAMETER_NOT_PRESENT, http.jsondecode(res.body).message)
-                    resolve();
-                } catch (e) {
-                    reject(e);
-                }
-            }.bindenv(this));
-        }.bindenv(this));
-    }
-
-
 
     // Test the update table function changes the tables
     // describes the table once it is updated to see if changes were made
@@ -735,8 +621,6 @@ class DynamoDBTest extends ImpTestCase {
         }.bindenv(this));
     }
 
-
-
     // To be called by the UpdateTable method, checks when a table has finished
     // updating its contained data
     function checkTableUpdated(params, cb) {
@@ -759,9 +643,6 @@ class DynamoDBTest extends ImpTestCase {
             }
         }.bindenv(this));
     }
-
-
-
 
     // creates a table then deletes it
     // checks for a 200 response
@@ -824,8 +705,6 @@ class DynamoDBTest extends ImpTestCase {
         }.bindenv(this));
     }
 
-
-
     // To be called by the delete table test, determines when deletion is complete
     function checkTableDeleted(params, cb) {
 
@@ -847,8 +726,6 @@ class DynamoDBTest extends ImpTestCase {
             }
         }.bindenv(this));
     }
-
-
 
     // To be called by the testDeleteTable() testing method
     function describeAndDeleteTable(params, cb) {
@@ -880,8 +757,6 @@ class DynamoDBTest extends ImpTestCase {
         }.bindenv(this));
     }
 
-
-
     // tests the DescribeLimits function returns values for the provisioned
     // capacity limits < 100
     function testDescribeLimits() {
@@ -904,8 +779,6 @@ class DynamoDBTest extends ImpTestCase {
             }.bindenv(this));
         }.bindenv(this));
     }
-
-
 
     // return an array of TableNames
     // checks for _tablename is listed
@@ -937,32 +810,6 @@ class DynamoDBTest extends ImpTestCase {
         }.bindenv(this));
     }
 
-
-
-    // return an array of TableNames
-    // Limit is maximum of 100
-    function testFailListTables() {
-
-        local params = {
-            "Limit": 200
-        };
-        return Promise(function(resolve, reject) {
-
-            _db.listTables(params, function(res) {
-
-                try {
-                    this.assertTrue(http.jsondecode(res.body).message == AWS_ERROR_LIMIT_100, http.jsondecode(res.body).message);
-                    resolve("Limit of 100");
-                } catch (e) {
-                    reject(e);
-                }
-
-            }.bindenv(this));
-        }.bindenv(this));
-    }
-
-
-
     // tests a query and checks that the retrieved values were aligned
     function testQuery() {
         return Promise(function(resolve, reject) {
@@ -993,8 +840,6 @@ class DynamoDBTest extends ImpTestCase {
         }.bindenv(this));
     }
 
-
-
     // test the scan function returns both the correct value of deviceId
     // and only returns a single item as the table should only have 1 item.
     function testScan() {
@@ -1020,8 +865,6 @@ class DynamoDBTest extends ImpTestCase {
             }.bindenv(this));
         }.bindenv(this));
     }
-
-
 
     // deletes the table used throughout the tests
     function tearDown() {

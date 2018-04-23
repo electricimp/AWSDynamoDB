@@ -3,5 +3,5 @@
 **/*.out
 **/*.swp
 .build_api_key.json
-test*
 src
+build
