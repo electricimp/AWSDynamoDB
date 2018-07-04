@@ -22,6 +22,8 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
+@include "github:electricimp/AWSRequestV4/AWSRequestV4.class.nut"
+
 // Enter your AWS keys here
 const AWS_DYNAMO_ACCESS_KEY_ID = "YOUR_KEY_ID_HERE";
 const AWS_DYNAMO_SECRET_ACCESS_KEY = "YOUR_KEY_HERE";
@@ -95,7 +97,7 @@ class DynamoDBNegativeTest extends ImpTestCase {
             };
 
             // Create a table with random name per test testTable.randNum
-            _db.createTable(params, function(res) {
+            _db.action(AWS_DYNAMO_DB_ACTION_CREATE_TABLE, params, function(res) {
 
                 // check status code indication successful creation
                 if (res.statuscode >= AWS_TEST_HTTP_RESPONSE_SUCCESS && res.statuscode < AWS_TEST_HTTP_RESPONSE_SUCCESS_UPPER_BOUND) {
@@ -124,7 +126,7 @@ class DynamoDBNegativeTest extends ImpTestCase {
     // waits until table is active e.g finished creating then calls cb
     function checkTable(params, cb) {
 
-        _db.describeTable(params, function(res) {
+        _db.action(AWS_DYNAMO_DB_ACTION_DESCRIBE_TABLE, params, function(res) {
 
             if (res.statuscode >= AWS_TEST_HTTP_RESPONSE_SUCCESS && res.statuscode < AWS_TEST_HTTP_RESPONSE_SUCCESS_UPPER_BOUND) {
                 if (http.jsondecode(res.body).Table.TableStatus == "ACTIVE") {
@@ -162,7 +164,7 @@ class DynamoDBNegativeTest extends ImpTestCase {
         };
         return Promise(function(resolve, reject) {
 
-            _db.putItem(params, function(res) {
+            _db.action(AWS_DYNAMO_DB_ACTION_PUT_ITEM, params, function(res) {
 
                 try {
                     this.assertTrue(res.statuscode == AWS_TEST_HTTP_RESPONSE_BAD_REQUEST, "Actual status: " + res.statuscode);
@@ -195,7 +197,7 @@ class DynamoDBNegativeTest extends ImpTestCase {
         };
         return Promise(function(resolve, reject) {
 
-            _db.getItem(getParams, function(res) {
+            _db.action(AWS_DYNAMO_DB_ACTION_GET_ITEM, getParams, function(res) {
 
                 try {
                     this.assertTrue(res.statuscode == AWS_TEST_HTTP_RESPONSE_BAD_REQUEST, "Actual status: " + res.statuscode);
@@ -218,7 +220,7 @@ class DynamoDBNegativeTest extends ImpTestCase {
         };
         return Promise(function(resolve, reject) {
 
-            _db.updateTable(params, function(res) {
+            _db.action(AWS_DYNAMO_DB_ACTION_UPDATE_TABLE, params, function(res) {
 
                 try {
                     this.assertTrue(res.statuscode == AWS_TEST_HTTP_RESPONSE_BAD_REQUEST, res.statuscode)
@@ -235,7 +237,7 @@ class DynamoDBNegativeTest extends ImpTestCase {
     // updating its contained data
     function checkTableUpdated(params, cb) {
 
-        _db.describeTable(params, function(res) {
+        _db.action(AWS_DYNAMO_DB_ACTION_DESCRIBE_TABLE, params, function(res) {
 
             if (res.statuscode >= AWS_TEST_HTTP_RESPONSE_SUCCESS && res.statuscode < AWS_TEST_HTTP_RESPONSE_SUCCESS_UPPER_BOUND) {
                 if (http.jsondecode(res.body).Table.TableStatus == "ACTIVE") {
@@ -257,7 +259,7 @@ class DynamoDBNegativeTest extends ImpTestCase {
     // To be called by the delete table test, determines when deletion is complete
     function checkTableDeleted(params, cb) {
 
-        _db.describeTable(params, function(res) {
+        _db.action(AWS_DYNAMO_DB_ACTION_DESCRIBE_TABLE, params, function(res) {
 
             if (res.statuscode >= AWS_TEST_HTTP_RESPONSE_SUCCESS && res.statuscode < AWS_TEST_HTTP_RESPONSE_SUCCESS_UPPER_BOUND) {
                 if (http.jsondecode(res.body).Table.TableStatus == "DELETING") {
@@ -279,11 +281,11 @@ class DynamoDBNegativeTest extends ImpTestCase {
     // To be called by the testDeleteTable() testing method
     function describeAndDeleteTable(params, cb) {
 
-        _db.describeTable(params, function(res) {
+        _db.action(AWS_DYNAMO_DB_ACTION_DESCRIBE_TABLE, params, function(res) {
 
             if (res.statuscode >= AWS_TEST_HTTP_RESPONSE_SUCCESS && res.statuscode < AWS_TEST_HTTP_RESPONSE_SUCCESS_UPPER_BOUND) {
                 if (http.jsondecode(res.body).Table.TableStatus == "ACTIVE") {
-                    _db.deleteTable(params, function(res) {
+                    _db.action(AWS_DYNAMO_DB_ACTION_DELETE_TABLE, params, function(res) {
 
                         if (res.statuscode >= AWS_TEST_HTTP_RESPONSE_SUCCESS && res.statuscode < AWS_TEST_HTTP_RESPONSE_SUCCESS_UPPER_BOUND) {
                             cb(true);
@@ -315,7 +317,7 @@ class DynamoDBNegativeTest extends ImpTestCase {
         };
         return Promise(function(resolve, reject) {
 
-            _db.listTables(params, function(res) {
+            _db.action(AWS_DYNAMO_DB_ACTION_LIST_TABLES, params, function(res) {
 
                 try {
                     this.assertTrue(http.jsondecode(res.body).message == AWS_ERROR_LIMIT_100, http.jsondecode(res.body).message);

@@ -22,16 +22,33 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
+const AWS_DYNAMO_DB_ACTION_BATCH_GET_ITEM   = "BatchGetItem";
+const AWS_DYNAMO_DB_ACTION_BATCH_WRITE_ITEM = "BatchWriteItem";
+const AWS_DYNAMO_DB_ACTION_CREATE_TABLE     = "CreateTable";
+const AWS_DYNAMO_DB_ACTION_DELETE_ITEM      = "DeleteItem";
+const AWS_DYNAMO_DB_ACTION_DELETE_TABLE     = "DeleteTable";
+const AWS_DYNAMO_DB_ACTION_DESCRIBE_LIMITS  = "DescribeLimits";
+const AWS_DYNAMO_DB_ACTION_DESCRIBE_TABLE   = "DescribeTable";
+const AWS_DYNAMO_DB_ACTION_GET_ITEM         = "GetItem";
+const AWS_DYNAMO_DB_ACTION_LIST_TABLES      = "ListTables";
+const AWS_DYNAMO_DB_ACTION_PUT_ITEM         = "PutItem";
+const AWS_DYNAMO_DB_ACTION_QUERY            = "Query";
+const AWS_DYNAMO_DB_ACTION_SCAN             = "Scan";
+const AWS_DYNAMO_DB_ACTION_UPDATE_ITEM      = "UpdateItem";
+const AWS_DYNAMO_DB_ACTION_UPDATE_TABLE     = "UpdateTable";
+
+const AWS_DYNAMO_DB_SERVICE                 = "dynamodb";
+const AWS_DYNAMO_DB_TARGET_PREFIX           = "DynamoDB_20120810";
+const AWS_DYNAMO_DB_CONTENT_TYPE            = "application/x-amz-json-1.0";
+
 class AWSDynamoDB {
 
     static VERSION = "1.0.0";
-    static SERVICE = "dynamodb";
-    static TARGET_PREFIX = "DynamoDB_20120810";
 
     _awsRequest = null;
 
     ////////////////////////////////////////////////////////////////////////////
-    // @param {string} region - \
+    // @param {string} region
     // @param {string} accessKeyId
     // @param {string} secretAccessKey
     ////////////////////////////////////////////////////////////////////////////
@@ -44,128 +61,15 @@ class AWSDynamoDB {
     }
 
     ////////////////////////////////////////////////////////////////////////////
+    // @param {string} actionType
     // @param {table} params
     // @param {function} cb
     ////////////////////////////////////////////////////////////////////////////
-    function batchGetItem(params, cb) {
-        local headers = { "X-Amz-Target": format("%s.BatchGetItem", TARGET_PREFIX) };
-        _awsRequest.post("/", headers, http.jsonencode(params), cb);
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-    // @param {table} params
-    // @param {function} cb
-    ////////////////////////////////////////////////////////////////////////////
-    function batchWriteItem(params, cb) {
-        local headers = { "X-Amz-Target": format("%s.BatchWriteItem", TARGET_PREFIX) };
-        _awsRequest.post("/", headers, http.jsonencode(params), cb);
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-    // @param {table} params
-    // @param {function} cb
-    ////////////////////////////////////////////////////////////////////////////
-    function createTable(params, cb) {
-        local headers = { "X-Amz-Target": format("%s.CreateTable", TARGET_PREFIX) };
-        _awsRequest.post("/", headers, http.jsonencode(params), cb);
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-    // @param {table} params
-    // @param {function} cb
-    ////////////////////////////////////////////////////////////////////////////
-    function deleteItem(params, cb) {
-        local headers = { "X-Amz-Target": format("%s.DeleteItem", TARGET_PREFIX) };
-        _awsRequest.post("/", headers, http.jsonencode(params), cb);
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-    // @param {table} params
-    // @param {function} cb
-    ////////////////////////////////////////////////////////////////////////////
-    function deleteTable(params, cb) {
-        local headers = { "X-Amz-Target": format("%s.DeleteTable", TARGET_PREFIX) };
-        _awsRequest.post("/", headers, http.jsonencode(params), cb);
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-    // @param {table} params
-    // @param {function} cb
-    ////////////////////////////////////////////////////////////////////////////
-    function describeLimits(params, cb) {
-        local headers = { "X-Amz-Target": format("%s.DescribeLimits", TARGET_PREFIX) };
-        _awsRequest.post("/", headers, http.jsonencode(params), cb);
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-    // @param {table} params
-    // @param {function} cb
-    ////////////////////////////////////////////////////////////////////////////
-    function describeTable(params, cb) {
-        local headers = { "X-Amz-Target": format("%s.DescribeTable", TARGET_PREFIX) };
-        _awsRequest.post("/", headers, http.jsonencode(params), cb);
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-    // @param {table} params
-    // @param {function} cb
-    ////////////////////////////////////////////////////////////////////////////
-    function getItem(params, cb) {
-        local headers = { "X-Amz-Target": format("%s.GetItem", TARGET_PREFIX) };
-        _awsRequest.post("/", headers, http.jsonencode(params), cb);
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-    // @param {table} params
-    // @param {function} cb
-    ////////////////////////////////////////////////////////////////////////////
-    function listTables(params, cb) {
-        local headers = { "X-Amz-Target": format("%s.ListTables", TARGET_PREFIX) };
-        _awsRequest.post("/", headers, http.jsonencode(params), cb);
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-    // @param {table} params
-    // @param {function} cb
-     ////////////////////////////////////////////////////////////////////////////
-    function putItem(params, cb) {
-        local headers = { "X-Amz-Target": format("%s.PutItem", TARGET_PREFIX) };
-        _awsRequest.post("/", headers, http.jsonencode(params), cb);
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-    // @param {table} params
-    // @param {function} cb
-     ////////////////////////////////////////////////////////////////////////////
-    function query(params, cb) {
-        local headers = { "X-Amz-Target": format("%s.Query", TARGET_PREFIX) };
-        _awsRequest.post("/", headers, http.jsonencode(params), cb);
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-    // @param {table} params
-    // @param {function} cb
-     ////////////////////////////////////////////////////////////////////////////
-    function scan(params, cb) {
-        local headers = { "X-Amz-Target": format("%s.Scan", TARGET_PREFIX) };
-        _awsRequest.post("/", headers, http.jsonencode(params), cb);
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-    // @param {table} params
-    // @param {function} cb
-     ////////////////////////////////////////////////////////////////////////////
-    function updateItem(params, cb) {
-        local headers = { "X-Amz-Target": format("%s.UpdateItem", TARGET_PREFIX) };
-        _awsRequest.post("/", headers, http.jsonencode(params), cb);
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-    // @param {table} params
-    // @param {function} cb
-     ////////////////////////////////////////////////////////////////////////////
-    function updateTable(params, cb) {
-        local headers = { "X-Amz-Target": format("%s.UpdateTable", TARGET_PREFIX) };
+    function action(actionType, params, cb) {
+        local headers = {
+            "X-Amz-Target": format("%s.%s", AWS_DYNAMO_DB_TARGET_PREFIX, actionType),
+            "Content-Type": AWS_DYNAMO_DB_CONTENT_TYPE
+        };
         _awsRequest.post("/", headers, http.jsonencode(params), cb);
     }
 

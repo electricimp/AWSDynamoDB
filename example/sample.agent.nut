@@ -25,7 +25,6 @@
 #require "AWSRequestV4.class.nut:1.0.2"
 #require "AWSDynamoDB.agent.lib.nut:1.0.0"
 
-
 // Enter Your AWS details here
 const AWS_DYNAMO_ACCESS_KEY_ID = "YOUR_KEY_ID_HERE";
 const AWS_DYNAMO_SECRET_ACCESS_KEY = "YOUR_KEY_HERE";
@@ -35,7 +34,7 @@ const AWS_DYNAMO_REGION = "YOUR_REGION_HERE";
 // informs when table finish being created
 function checkTable(params, cb) {
 
-    db.describeTable(params, function(res) {
+    db.action(AWS_DYNAMO_DB_ACTION_DESCRIBE_TABLE, params, function(res) {
 
         if (res.statuscode >= 200 && res.statuscode < 300) {
             if (http.jsondecode(res.body).Table.TableStatus == "ACTIVE") {
@@ -116,7 +115,7 @@ local getParams = {
 
 
 // Runtime
-db.createTable(params, function(res) {
+db.action(AWS_DYNAMO_DB_ACTION_CREATE_TABLE, params, function(res) {
 
     if (res.statuscode >= 200 && res.statuscode < 300) {
         // check table is created
@@ -124,16 +123,16 @@ db.createTable(params, function(res) {
 
             server.log("Table creation successful");
             // puts an item in the table
-            db.putItem(putParams, function(res) {
+            db.action(AWS_DYNAMO_DB_ACTION_PUT_ITEM, putParams, function(res) {
 
                 server.log("Item put in table Successfully");
                 // waits until item is put table
                 checkTable({ "TableName": "test" }, function(res) {
 
-                    db.getItem(getParams, function(res) {
+                    db.action(AWS_DYNAMO_DB_ACTION_GET_ITEM, getParams, function(res) {
 
                         server.log("retrieveval successful retrieved time: " + http.jsondecode(res.body).Item.time.S);
-                        db.deleteTable({ "TableName": "test" }, function(res) {
+                        db.action(AWS_DYNAMO_DB_ACTION_DELETE_TABLE, { "TableName": "test" }, function(res) {
 
                             server.log("Successfully deleted table");
                         });
