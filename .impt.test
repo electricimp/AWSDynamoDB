@@ -1,0 +1,13 @@
+{
+  "deviceGroupId": "92d744bc-d3ad-c08e-5194-2157bd465108",
+  "timeout": 120,
+  "stopOnFail": false,
+  "allowDisconnect": false,
+  "builderCache": false,
+  "testFiles": [
+    "*.test.nut",
+    "tests/**/*.test.nut"
+  ],
+  "deviceFile": false,
+  "agentFile": "AWSDynamoDB.agent.lib.nut"
+}

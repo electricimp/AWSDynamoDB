@@ -54,7 +54,7 @@ class AWSDynamoDB {
     ////////////////////////////////////////////////////////////////////////////
     constructor(region, accessKeyId, secretAccessKey) {
         if ("AWSRequestV4" in getroottable()) {
-            _awsRequest = AWSRequestV4(SERVICE, region, accessKeyId, secretAccessKey);
+            _awsRequest = AWSRequestV4(AWS_DYNAMO_DB_SERVICE, region, accessKeyId, secretAccessKey);
         } else {
             throw ("This class requires AWSRequestV4 - please make sure it is loaded.");
         }

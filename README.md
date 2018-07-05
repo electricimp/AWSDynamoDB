@@ -1,9 +1,6 @@
 # AWSDynamoDB
 
-The helper library to invoke [AWS DynamoDB](https://aws.amazon.com/documentation/dynamodb/) functions from agent code.
-
-This class can be used to manage DynamoDB tables and perform actions such as
-creating, reading, updating and deleting data and tables.
+[Amazon DynamoDB](https://aws.amazon.com/documentation/dynamodb/) is a fully managed NoSQL database service that provides fast and predictable performance with seamless scalability. This library uses [AWS DynamoDB Rest API](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/Welcome.html) to provide low-level API actions for managing database tables and indexes, and for creating, reading, updating and deleting data.
 
 **Note: The AWSDynamoDB library uses [AWSRequestV4](https://github.com/electricimp/AWSRequestV4/) for all requests. Therefor the AWSRequestV4 must also be included in your agent code.**
 
@@ -47,17 +44,17 @@ This method performs a specified action (eg. get batch item) with the required p
 
 | Parameter      | Type     | Description |
 | -------------- | -------- | ----------- |
-| *actionType*   | Constant | The type of the Amazon CloudWatch Logs action that you want to perform. See [Action Types](#action-types) |
-| *actionParams* | Table    | Table of action-specific parameters. See [Action Parameters](#action-parameters) |
-| *callback*     | Function | Callback function that takes one parameter: a [Callback Response Table](#callback-response-table) |
+| *actionType*   | Constant | The type of the Amazon CloudWatch Logs action that you want to perform. See [Action Types](#action-types). |
+| *actionParams* | Table    | Table of action-specific parameters. See [Action Parameters](#action-parameters). |
+| *callback*     | Function | Callback function that takes one parameter: a [Response Table](#response-table). |
 
 #### Response Table
 
-The format of the response table general to all functions
+The format of the response table general to all callback functions.
 
 | Key                   | Type           | Description |
 | --------------------- | -------------- | ----------- |
-| body                  | String         | DynamoDB response in a function specific structure that is json encoded. See each action parameter description for details. |
+| body                  | String         | DynamoDB response in a function specific structure that is json encoded. See each Action Parameter Response section for details. |
 | statuscode            | Integer        | HTTP status code. |
 | headers               | Table          | See headers below. |
 
