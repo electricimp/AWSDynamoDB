@@ -110,13 +110,13 @@ class DynamoDBNegativeTest extends ImpTestCase {
                     checkTable(describeParams, function(result) {
 
                         if (typeof result == "bool" && result == true) {
-                            resolve("Running #{__FILE__}");
+                            resolve("Running @{__FILE__}");
                         } else {
                             reject(result);
                         }
                     }.bindenv(this));
                 } else {
-                    reject("Failed to create table during setup of #{__FILE__}. Statuscode: " + res.statuscode + ". Message: " + http.jsondecode(res.body).message);
+                    reject("Failed to create table during setup of @{__FILE__}. Statuscode: " + res.statuscode + ". Message: " + http.jsondecode(res.body).message);
                 }
             }.bindenv(this));
         }.bindenv(this));
@@ -138,7 +138,7 @@ class DynamoDBNegativeTest extends ImpTestCase {
                     }.bindenv(this));
                 }
             } else {
-                local msg = "Failed to describe table during setup of #{__FILE__}. Statuscode: " + res.statuscode + ". Message: " + http.jsondecode(res.body).message;
+                local msg = "Failed to describe table during setup of @{__FILE__}. Statuscode: " + res.statuscode + ". Message: " + http.jsondecode(res.body).message;
                 cb(msg);
             }
         }.bindenv(this));
@@ -341,9 +341,9 @@ class DynamoDBNegativeTest extends ImpTestCase {
             describeAndDeleteTable(params, function(result) {
 
                 if (typeof result == "bool" && result == true) {
-                    resolve("Finished testing and cleaned up after #{__FILE__}");
+                    resolve("Finished testing and cleaned up after @{__FILE__}");
                 } else {
-                    reject("Finished testing but failed to clean up after #{__FILE__}");
+                    reject("Finished testing but failed to clean up after @{__FILE__}");
                 }
             }.bindenv(this));
         }.bindenv(this));

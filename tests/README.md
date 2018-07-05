@@ -2,11 +2,11 @@
 
 The instructions will show you how to set up the tests for AWS DynamoDB.
 
-As the sample code includes the private key verbatim in the source, it should be treated carefully, and not checked into version control!
+## Configure the API keys for DynamoDB
 
-## Configure the API keys for SNS
+Testing requires AWS access keys. For instructions on how to create keys see the README included in the example folder. At the top of the .test.nut files find the three constants that need to be configured and enter your credentials.
 
-At the top of the .test.nut files there are three constants that need to be configured.
+**Note:** Once you have added keys to the test code it should be treated carefully, and not checked into version control!
 
 Parameter                    | Description
 ---------------------------- | -----------
@@ -15,8 +15,9 @@ AWS_DYNAMO_ACCESS_KEY_ID     | IAM Access Key ID
 AWS_DYNAMO_SECRET_ACCESS_KEY | IAM Secret Access Key
 
 ## Imptest
-Please ensure that the `.imptest` agent file includes both AWSRequestV4 library and the AWSDynamoDB class.
-From the `tests` directory, run `imptest test`
+
+Please update the `.impt.test` file with a deviceGroupId for your account, and make sure you have a device assigned to that device group.
+From the command line run `impt test run`.
 
 # License
 
