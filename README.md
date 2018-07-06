@@ -62,7 +62,7 @@ The format of the response table general to all callback functions.
 | *statuscode* | Integer | An HTTP status code |
 | *headers* | Table | See ‘Headers’, below |
 
-##### Headers #####
+#### Headers ####
 
 The response table’s *headers* key is a table containing the following keys:
 
@@ -74,7 +74,7 @@ The response table’s *headers* key is a table containing the following keys:
 | *content-length* | String | The length of the content |
 | *x-amz-crc32* | String | Checksum of the UTF-8 encoded bytes in the HTTP response |
 
-#### Action Types ####
+## Action Types ##
 
 | Action Type | Description |
 | --- | --- |
@@ -95,19 +95,19 @@ The response table’s *headers* key is a table containing the following keys:
 
 Specific actions of the types [listed above](#action-types) are configured by passing information into *action()*’s *actionParams* parameter as a table with the following action type-specific keys.
 
-#### AWS_DYNAMO_DB_ACTION_BATCH_GET_ITEM ####
+### AWS_DYNAMO_DB_ACTION_BATCH_GET_ITEM ###
 
 This action returns the attributes of one or more items from one or more tables. You identify requested items by primary key. For more detail please see the
 [AWS DynamoDB documentation](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html).
 
-##### Parameters Table Keys #####
+#### Parameters Table Keys ####
 
 | Key | Type | Required | Description |
 | --- | --- | --- | --- |
 | *RequestItems* | Table | Yes | A map of one or more table names and, for each table, a list of operations to be performed (DeleteRequest or PutRequest) |
 | *ReturnConsumedCapacity* | String | No | Valid values: *INDEXES, TOTAL, NONE*.<br />*INDEXES* returns aggregate *ConsumedCapacity* for the operation, and *ConsumedCapacity* for each table and secondary index.<br />*TOTAL* returns only aggregate *ConsumedCapacity*.<br />*NONE* (default) returns no *ConsumedCapacity* details |
 
-##### Response #####
+#### Response ####
 
 The response table contains a key, *body*, which is a table that includes the following JSON encoded keys:
 
@@ -117,7 +117,7 @@ The response table contains a key, *body*, which is a table that includes the fo
 | *Responses* | Table | Each object in *Responses* consists of a table name, along with a map of attribute data consisting of the data type and attribute value |
 | *UnprocessedKeys* | Table | A map of tables and their respective keys that were not processed with the current response |
 
-##### Example ####
+#### Example ####
 
 **Note** Follows from *AWS_DYNAMO_DB_ACTION_BATCH_WRITE_ITEM* Example
 
@@ -140,12 +140,12 @@ db.action(AWS_DYNAMO_DB_ACTION_BATCH_GET_ITEM, getParams, function(response) {
 })
 ```
 
-#### AWS_DYNAMO_DB_ACTION_BATCH_WRITE_ITEM ####
+### AWS_DYNAMO_DB_ACTION_BATCH_WRITE_ITEM ###
 
 This action puts or deletes multiple items into or from one or more tables. For more detail please see the
 [AWS DynamoDB documentation](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchWriteItem.html).
 
-##### Parameters Table Keys #####
+#### Parameters Table Keys ####
 
 | Key | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -153,7 +153,7 @@ This action puts or deletes multiple items into or from one or more tables. For 
 | *ReturnConsumedCapacity* | String | No | Valid values: *INDEXES, TOTAL, NONE*.<br />*INDEXES* returns aggregate *ConsumedCapacity* for the operation, and *ConsumedCapacity* for each table and secondary index.<br />*TOTAL* returns only aggregate *ConsumedCapacity*.<br />*NONE* (default) returns no *ConsumedCapacity* details |
 | *ReturnItemCollectionMetrics* | String | No | Determines whether item collection metrics are returned. If set to *SIZE*, the response includes statistics about item collections. If set to *NONE* (default), no statistics are returned |
 
-##### Response #####
+#### Response ####
 
 The response table contains a key, *body*, which is a table that includes the following JSON encoded keys:
 
@@ -163,7 +163,7 @@ The response table contains a key, *body*, which is a table that includes the fo
 | *ItemCollectionMetrics* | Array of tables | A list of tables that were processed by the batch action and, for each table, information about any item collections that were affected by individual delete or put operations |
 | *UnprocessedItems* | Array of tables | A map of tables and requests against those tables that were not processed. The value of *UnprocessedItems* is in the same form as *requestItems*, so you can provide this value directly to a subsequent batch read operation |
 
-##### Example #####
+#### Example ####
 
 ```squirrel
 // Writing to an existing table called testTable2 with key schema seen in create table
@@ -191,12 +191,12 @@ db.action(AWS_DYNAMO_DB_ACTION_BATCH_WRITE_ITEM, writeParams, function(response)
 })
 ```
 
-#### AWS_DYNAMO_DB_ACTION_CREATE_TABLE ####
+### AWS_DYNAMO_DB_ACTION_CREATE_TABLE ###
 
 This action adds a new table to your account. In an AWS account, table names must be unique within each region. For more detail please see the
 [AWS DynamoDB documentation](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_CreateTable.html).
 
-##### Parameters Table Keys #####
+#### Parameters Table Keys ####
 
 | Key | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -208,7 +208,7 @@ This action adds a new table to your account. In an AWS account, table names mus
 | *LocalSecondaryIndexes* | Array of tables | No | See [here](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_LocalSecondaryIndex.html). Default: `null` |
 | *StreamSpecifiation* | Table | No | See [here](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_StreamSpecification.html). Default: `null` |
 
-##### Response #####
+#### Response ####
 
 The response table contains a key, *body*, which is a table that includes the following JSON encoded keys:
 
@@ -216,7 +216,7 @@ The response table contains a key, *body*, which is a table that includes the fo
 | --- | --- | --- |
 | *TableDescription* | Table | Represents the properties of a table (see [here](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_TableDescription.html)) |
 
-##### Example #####
+#### Example ####
 
 ```squirrel
 local randNum = (1.0 * math.rand() / RAND_MAX) * 1001;
@@ -246,11 +246,11 @@ db.action(AWS_DYNAMO_DB_ACTION_CREATE_TABLE, params, function(response) {
 }.bindenv(this));
 ```
 
-#### AWS_DYNAMO_DB_ACTION_DELETE_ITEM ####
+### AWS_DYNAMO_DB_ACTION_DELETE_ITEM ###
 
 This action deletes a single item in a table by primary key. For more detail please see the [AWS DynamoDB documentation](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteItem.html).
 
-##### Parameters Table Keys #####
+#### Parameters Table Keys ####
 
 | Key | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -263,7 +263,7 @@ This action deletes a single item in a table by primary key. For more detail ple
 | *ReturnItemCollectionMetrics* | String | No | Determines whether item collection metrics are returned. If set to *SIZE*, the response includes statistics about item collections. If set to *NONE* (default), no statistics are returned |
 | *ReturnValues* | String | No | Use *ALL_OLD* if you want to get the item attributes as they appeared before they were deleted, else *NONE* (default) where nothing is returned |
 
-##### Response #####
+#### Response ####
 
 The response table contains a key, *body*, which is a table that includes the following JSON encoded keys:
 
@@ -273,7 +273,7 @@ The response table contains a key, *body*, which is a table that includes the fo
 | *ConsumedCapacity* | Table | The capacity units consumed by the PutItem operation (see [here](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ConsumedCapacity.html)) |
 | *ItemCollectionMetrics* | Table | Information about item collections, if any, that were affected by the put operation (see [here](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ItemCollectionMetrics.html)) |
 
-##### Example #####
+#### Example ####
 
 ```squirrel
 local tableName = "YOUR_TABLE_NAME";
@@ -294,17 +294,17 @@ db.action(AWS_DYNAMO_DB_ACTION_DELETE_ITEM, deleteParams, function(response) {
 });
 ```
 
-#### AWS_DYNAMO_DB_ACTION_DELETE_TABLE ####
+### AWS_DYNAMO_DB_ACTION_DELETE_TABLE ###
 
 This action deletes a single table. For more details please see the [AWS DynamoDB documentation](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteTable.html).
 
-##### Parameters Table Keys #####
+#### Parameters Table Keys ####
 
 | Key | Type | Required | Description |
 | --- | --- | --- | --- |
 | *TableName* | String | Yes | The name of the table to delete |
 
-##### Response #####
+#### Response ####
 
 The response table contains a key, *body*, which is a table that includes the following JSON encoded keys:
 
@@ -312,7 +312,7 @@ The response table contains a key, *body*, which is a table that includes the fo
 | --- | --- | --- |
 | *TableDescription* | Table | Represents the properties of a table (see [here](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_TableDescription.html)) |
 
-##### Example #####
+#### Example ####
 
 ```squirrel
 local params = { "TableName": tableName };
@@ -326,13 +326,13 @@ db.action(AWS_DYNAMO_DB_ACTION_DELETE_TABLE, params, function(response) {
 });
 ```
 
-#### AWS_DYNAMO_DB_ACTION_DESCRIBE_LIMITS ####
+### AWS_DYNAMO_DB_ACTION_DESCRIBE_LIMITS ###
 
 This action returns the current provisioned-capacity limits for your AWS account in a region, both for the region as a whole and for any one DynamoDB table that you create there. For more detail please see the [AWS DynamoDB documentation](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeLimits.html).
 
 This action requires no action parameters &mdash; pass in an empty table as per the example below.
 
-##### Response #####
+#### Response ####
 
 The response table contains a key, *body*, which is a table that includes the following JSON encoded keys:
 
@@ -343,7 +343,7 @@ The response table contains a key, *body*, which is a table that includes the fo
 | *TableMaxReadCapacityUnits* | Integer | The maximum read capacity units that your account allows you to provision for a new table that you are creating in this region, including the read capacity units provisioned for its global secondary indexes (GSIs) |
 | *TableMaxWriteCapacityUnits* | Integer | The maximum write capacity units that your account allows you to provision for a new table that you are creating in this region, including the write capacity units provisioned for its global secondary indexes (GSIs) |
 
-##### Example #####
+#### Example ####
 
 ```squirrel
 db.action(AWS_DYNAMO_DB_ACTION_DESCRIBE_LIMITS, {}, function(response) {
@@ -355,17 +355,17 @@ db.action(AWS_DYNAMO_DB_ACTION_DESCRIBE_LIMITS, {}, function(response) {
 });
 ```
 
-#### AWS_DYNAMO_DB_ACTION_DESCRIBE_TABLE ####
+### AWS_DYNAMO_DB_ACTION_DESCRIBE_TABLE ###
 
 This action returns information about the table, including the current status of the table, when it was created, the primary key schema, and any indexes on the table. For more details please see the [AWS DynamoDB documentation](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeTable.html).
 
-##### Parameters Table Keys #####
+#### Parameters Table Keys ####
 
 | Key | Type | Required | Description |
 | --- | --- | --- | --- |
 | *TableName* | String | Yes | The name of the table to describe |
 
-##### Response #####
+#### Response ####
 
 The response table contains a key, *body*, which is a table that includes the following JSON encoded keys:
 
@@ -373,7 +373,7 @@ The response table contains a key, *body*, which is a table that includes the fo
 | --- | --- | --- |
 | *Table* | Table | See [here](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_TableDescription.html) |
 
-##### Example #####
+#### Example ####
 
 ```squirrel
 local tableName = "YOUR_TABLE_NAME";
@@ -383,11 +383,11 @@ db.action(AWS_DYNAMO_DB_ACTION_DESCRIBE_TABLE, params, function(response) {
 });
 ```
 
-#### AWS_DYNAMO_DB_ACTION_GET_ITEM ####
+### AWS_DYNAMO_DB_ACTION_GET_ITEM ###
 
 This action returns a set of attributes for the item with the given primary key. For more details please see the [AWS DynamoDB documentation](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_GetItem.html).
 
-##### Parameters Table Keys #####
+#### Parameters Table Keys ####
 
 | Key | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -399,7 +399,7 @@ This action returns a set of attributes for the item with the given primary key.
 | *ProjectionExpression* | String | No | String that identifies one or more attributes to retrieve from the table. These attributes can include scalars, sets or elements of a JSON document. The attributes in the expression must be separated by commas. Default: `null` |
 | *ReturnConsumedCapacity* | String | No | Valid values: *INDEXES, TOTAL, NONE*.<br />*INDEXES* returns aggregate *ConsumedCapacity* for the operation, and *ConsumedCapacity* for each table and secondary index.<br />*TOTAL* returns only aggregate *ConsumedCapacity*.<br />*NONE* (default) returns no *ConsumedCapacity* details |
 
-##### Response #####
+#### Response ####
 
 The response table contains a key, *body*, which is a table that includes the following JSON encoded keys:
 
@@ -408,7 +408,7 @@ The response table contains a key, *body*, which is a table that includes the fo
 | *ConsumedCapacity* | Table | The capacity units consumed by the GetItem operation (see [here](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ConsumedCapacity.html)) |
 | *Item* | Table | A map of attribute names to AttributeValue objects (see [here](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeValue.html)) |
 
-##### Example #####
+#### Example ####
 
 ```squirrel
 local tableName = "YOUR_TABLE_NAME";
@@ -426,18 +426,18 @@ db.action(AWS_DYNAMO_DB_ACTION_GET_ITEM, getParams, function(response) {
 });
 ```
 
-#### AWS_DYNAMO_DB_ACTION_LIST_TABLES ####
+### AWS_DYNAMO_DB_ACTION_LIST_TABLES ###
 
 This action returns an array of table names associated with the current account and endpoint. For more details please see the [AWS DynamoDB documentation](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ListTables.html).
 
-##### Parameters Table Keys #####
+#### Parameters Table Keys ####
 
 | Key | Type | Required | Description |
 | --- | --- | --- | --- |
 | *ExclusiveStartTableName* | String | No | The first table name that this operation will evaluate. Default: `null` |
 | *Limit* | Integer | No | A maximum number of table names to return. Default: 100 |
 
-##### Response #####
+#### Response ####
 
 The response table contains a key, *body*, which is a table that includes the following JSON encoded keys:
 
@@ -446,7 +446,7 @@ The response table contains a key, *body*, which is a table that includes the fo
 | *LastEvaluatedTableName* | String | The name of the last table in the current page of results |
 | *TableNames* | Array of strings | The names of the tables associated with the current account at the current endpoint. The maximum size of this array is 100 |
 
-##### Example #####
+#### Example ####
 
 ```squirrel
 local params = { "Limit": 10 };
@@ -460,11 +460,11 @@ db.action(AWS_DYNAMO_DB_ACTION_LIST_TABLES, params, function(response) {
 });
 ```
 
-#### AWS_DYNAMO_DB_ACTION_PUT_ITEM ####
+### AWS_DYNAMO_DB_ACTION_PUT_ITEM ###
 
 This action creates a new item, or replaces an old item with a new item. For more details please see the [AWS DynamoDB documentation](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_PutItem.html).
 
-##### Parameters Table Keys #####
+#### Parameters Table Keys ####
 
 | Key | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -478,7 +478,7 @@ This action creates a new item, or replaces an old item with a new item. For mor
 | *ReturnItemCollectionMetrics* | String | No | Valid Values: *SIZE, NONE*. If set to *SIZE*, the response includes statistics about item collections. If set to *NONE* (default), no statistics are returned |
 | *ReturnValues* | String | No | Valid Values: *ALL_OLD, NONE*. If set to *ALL_OLD*, then if the action overwrote an attribute name-value pair, the content of the old item is returned. If set to *NONE* (default), nothing is returned |
 
-##### Response #####
+#### Response ####
 
 The response table contains a key, *body*, which is a table that includes the following JSON encoded keys:
 
@@ -488,7 +488,7 @@ The response table contains a key, *body*, which is a table that includes the fo
 | *ConsumedCapacity* | Table | The capacity units consumed by the PutItem operation (see [here](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ConsumedCapacity.html)) |
 | *ItemCollectionMetrics* | Table | Information about item collections, if any, that were affected by the put operation (see [here](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ItemCollectionMetrics.html)) |
 
-##### Example #####
+#### Example ####
 
 ```squirrel
 local tableName = "YOUR_TABLE_NAME";
@@ -507,11 +507,11 @@ db.action(AWS_DYNAMO_DB_ACTION_PUT_ITEM, putParams, function(response) {
 });
 ```
 
-#### AWS_DYNAMO_DB_ACTION_QUERY ####
+### AWS_DYNAMO_DB_ACTION_QUERY ###
 
 This action is a query operation that uses the primary key of a table or a secondary index to directly access items from that table or index. For more details please see the [AWS DynamoDB documentation](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html).
 
-##### Parameters Table Keys #####
+#### Parameters Table Keys ####
 
 | Key | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -531,7 +531,7 @@ This action is a query operation that uses the primary key of a table or a secon
 | *ScanIndexForward* | Boolean | No | Specifies the order for index traversal: if `true` (default), the traversal is performed in ascending order; if `false`, the traversal is performed in descending order |
 | *Select* | String | No | The attributes to be returned in the result. You can retrieve all item attributes, specific item attributes, the count of matching items, or in the case of an index, some or all of the attributes projected into the index. Default: `null` |
 
-##### Response #####
+#### Response ####
 
 The response table contains a key, *body*, which is a table that includes the following JSON encoded keys:
 
@@ -543,7 +543,7 @@ The response table contains a key, *body*, which is a table that includes the fo
 | *LastEvaluatedKey* | Table | The primary key of the item where the operation stopped, inclusive of the previous result set. Use this value to start a new operation, excluding this value in the new request |
 | *ScannedCount* | Integer | The number of items evaluated, before any query filter is applied. A high *ScannedCount* value with few, or no, *Count* results indicates an inefficient query operation |
 
-##### Example #####
+#### Example ####
 
 ```squirrel
 local params = { "TableName": tableName,
@@ -560,11 +560,11 @@ db.action(AWS_DYNAMO_DB_ACTION_QUERY, params, function(response) {
 });
 ```
 
-#### AWS_DYNAMO_DB_ACTION_SCAN ####
+### AWS_DYNAMO_DB_ACTION_SCAN ###
 
 This action returns one or more items and item attributes by accessing every item in a table or a secondary index. For more details please see the [AWS DynamoDB documentation](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html).
 
-##### Parameters Table Keys #####
+#### Parameters Table Keys ####
 
 | Key | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -584,7 +584,7 @@ This action returns one or more items and item attributes by accessing every ite
 | *Select* | String | No | The attributes to be returned in the result. You can retrieve all item attributes, specific item attributes, the count of matching items, or in the case of an index, some or all of the attributes projected into the index. Default: `null` |
 | *TotalSegments* | Integer | No | For a parallel scan request, *TotalSegments* represents the total number of segments into which the scan operation will be divided. Default: `null` |
 
-##### Response #####
+#### Response ####
 
 The response table contains a key, *body*, which is a table that includes the following JSON encoded keys:
 
@@ -596,7 +596,7 @@ The response table contains a key, *body*, which is a table that includes the fo
 | *LastEvaluatedKey* | Table | The primary key of the item where the operation stopped, inclusive of the previous result set. Use this value to start a new operation, excluding this value in the new request |
 | *ScannedCount* | Integer | The number of items evaluated, before any query filter is applied. A high *ScannedCount* value with few, or no, *Count* results indicates an inefficient query operation |
 
-##### Example #####
+#### Example ####
 
 ```squirrel
 local params = { "TableName": tableName, };
@@ -612,11 +612,11 @@ db.action(AWS_DYNAMO_DB_ACTION_SCAN, params, function(response) {
 });
 ```
 
-#### AWS_DYNAMO_DB_ACTION_UPDATE_ITEM ####
+### AWS_DYNAMO_DB_ACTION_UPDATE_ITEM ###
 
 This action updates an existing item.For more details please see the [AWS DynamoDB documentation](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html).
 
-##### Parameters Table Keys #####
+#### Parameters Table Keys ####
 
 | Key | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -631,7 +631,7 @@ This action updates an existing item.For more details please see the [AWS Dynamo
 | *ReturnValues* | String | No | Valid values: *ALL_OLD, All_NEW, UPDATED_OLD, UPDATED_NEW, NONE*, Use *ReturnValues* if you want to get the item attributes as they appeared either before or after they were updated. Use *ALL_OLD* for all attributes prior to being changed; *All_NEW* for all attributes after the change; *UPDATED_OLD* for all attributes that were changed but returns values prior to change; *UPDATED_NEW* for all attributes that were changed but returns values after the change; or *NONE* (default) to have nothing returned |
 | *UpdateExpression* | String | No | An expression that defines one or more attributes to be updated, the action to be performed on them, and new value(s) for them. Default: `null` |
 
-##### Response #####
+#### Response ####
 
 The response table contains a key, *body*, which is a table that includes the following JSON encoded keys:
 
@@ -641,7 +641,7 @@ The response table contains a key, *body*, which is a table that includes the fo
 | *ConsumedCapacity* | Table | See [here](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ConsumedCapacity.html) |
 | *ItemCollectionMetrics* | Table | See [here](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ItemCollectionMetrics.html) |
 
-##### Example #####
+#### Example ####
 
 **NOTE** This example follows from the *AWS_DYNAMO_DB_ACTION_PUT_ITEM* example.
 
@@ -664,11 +664,11 @@ db.action(AWS_DYNAMO_DB_ACTION_UPDATE_ITEM, updateParams, function(response) {
 });
 ```
 
-#### AWS_DYNAMO_DB_ACTION_UPDATE_TABLE ####
+### AWS_DYNAMO_DB_ACTION_UPDATE_TABLE ###
 
 This action modifies the provisioned throughput settings, global secondary indexes, or DynamoDB Streams settings for a given table. For more details please see the [AWS DynamoDB documentation](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateTable.html).
 
-##### Parameters Table Keys #####
+#### Parameters Table Keys ####
 
 | Key | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -678,7 +678,7 @@ This action modifies the provisioned throughput settings, global secondary index
 | *ProvisionedThroughput* | Table | No | The new provisioned throughput settings for the specified table or index (see [here](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ProvisionedThroughput.html)). Default: `null` |
 | *StreamSpecification* | Table | No | Represents the DynamoDB Streams configuration for the table (see [here](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_StreamSpecification.html)). Default: `null` |
 
-##### Response #####
+#### Response ####
 
 The response table contains a key, *body*, which is a table that includes the following JSON encoded keys:
 
@@ -686,7 +686,7 @@ The response table contains a key, *body*, which is a table that includes the fo
 | --- | --- | --- |
 | *TableDescription* | Table | Represents the properties of a [table](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_TableDescription.html) |
 
-##### Example #####
+#### Example ####
 
 ```squirrel
 local params = { "TableName": _tablename,
