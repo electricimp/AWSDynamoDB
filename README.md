@@ -1,6 +1,6 @@
 # AWSDynamoDB #
 
-[Amazon AWS DynamoDB](https://aws.amazon.com/documentation/dynamodb) is a fully managed NoSQL database service. This library uses [AWS DynamoDB Rest API](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/Welcome.html) to provide low-level API actions for managing database tables and indexes, and for creating, reading, updating and deleting data.
+[AWS DynamoDB](https://aws.amazon.com/documentation/dynamodb) is a fully managed NoSQL database service. This library uses [AWS DynamoDB Rest API](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/Welcome.html) to provide low-level API actions for managing database tables and indexes, and for creating, reading, updating and deleting data.
 
 **Note** The AWSDynamoDB library uses [AWSRequestV4](https://github.com/electricimp/AWSRequestV4) for all requests, so the AWSRequestV4 must also be included in your agent code.
 

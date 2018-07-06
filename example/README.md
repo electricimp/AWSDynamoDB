@@ -54,6 +54,6 @@ Find the code comment `// Enter Your AWS details here` and locate the following 
 
 Enter the **Access key ID** and **Secret access key** from the previous step into the corresponding constants.
 
-The WSRequestV4 library requires a region, so you will need to choose an AWS region (for example, `us-west-2`) to enter as the *AWS_DYNAMO_REGION* constant. Please see the [AWS documentation](https://docs.aws.amazon.com/general/latest/gr/rande.html#ddb_region) for a list regions.
+The AWSRequestV4 library requires a region, so you will need to choose an AWS region (for example, `us-west-2`) to enter as the *AWS_DYNAMO_REGION* constant. Please see the [AWS documentation](https://docs.aws.amazon.com/general/latest/gr/rande.html#ddb_region) for a list regions.
 
 Run the example code and it should create a dynamoDB table, put a item into the table, and retrieve it. After this the table is deleted.
