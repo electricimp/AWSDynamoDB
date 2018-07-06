@@ -81,17 +81,17 @@ The response table’s *headers* key is a table containing the following keys:
 | [*AWS_DYNAMO_DB_ACTION_BATCH_GET_ITEM*](#aws_dynamo_db_action_batch_get_item) | Returns the attributes of one or more items from one or more tables |
 | [*AWS_DYNAMO_DB_ACTION_BATCH_WRITE_ITEM*](#aws_dynamo_db_action_batch_write_item) | Puts or deletes multiple items in one or more tables |
 | [*AWS_DYNAMO_DB_ACTION_CREATE_TABLE*](#aws_dynamo_db_action_create_table) | Adds a new table to your account |
-| [*AWS_DYNAMO_DB_ACTION_DELETE_ITEM*](#aws_dynamo_db_action_delete_item) | Deletes a single item in a table by primary key |
-| [*AWS_DYNAMO_DB_ACTION_DELETE_TABLE*](#aws_dynamo_db_action_delete_table) | Uploads a batch of log events to the specified log stream |
-| [*AWS_DYNAMO_DB_ACTION_DESCRIBE_LIMITS*](#aws_dynamo_db_action_describe_limits) | Uploads a batch of log events to the specified log stream |
-| [*AWS_DYNAMO_DB_ACTION_DESCRIBE_TABLE*](#aws_dynamo_db_action_describe_table) | Uploads a batch of log events to the specified log stream |
-| [*AWS_DYNAMO_DB_ACTION_GET_ITEM*](#aws_dynamo_db_action_get_item) | Uploads a batch of log events to the specified log stream |
-| [*AWS_DYNAMO_DB_ACTION_LIST_TABLES*](#aws_dynamo_db_action_list_tables) | Uploads a batch of log events to the specified log stream |
-| [*AWS_DYNAMO_DB_ACTION_PUT_ITEM*](#aws_dynamo_db_action_put_item) | Uploads a batch of log events to the specified log stream |
-| [*AWS_DYNAMO_DB_ACTION_QUERY*](#aws_dynamo_db_action_query) | Uploads a batch of log events to the specified log stream |
-| [*AWS_DYNAMO_DB_ACTION_SCAN*](#aws_dynamo_db_action_scan) | Uploads a batch of log events to the specified log stream |
-| [*AWS_DYNAMO_DB_ACTION_UPDATE_ITEM*](#aws_dynamo_db_action_update_item) | Uploads a batch of log events to the specified log stream |
-| [*AWS_DYNAMO_DB_ACTION_UPDATE_TABLE*](#aws_dynamo_db_action_update_table) | Uploads a batch of log events to the specified log stream |
+| [*AWS_DYNAMO_DB_ACTION_DELETE_ITEM*](#aws_dynamo_db_action_delete_item) | Deletes a single existing item |
+| [*AWS_DYNAMO_DB_ACTION_DELETE_TABLE*](#aws_dynamo_db_action_delete_table) | Deletes a single existing table |
+| [*AWS_DYNAMO_DB_ACTION_DESCRIBE_LIMITS*](#aws_dynamo_db_action_describe_limits) | Returns the current provisioned-capacity limits for your AWS account |
+| [*AWS_DYNAMO_DB_ACTION_DESCRIBE_TABLE*](#aws_dynamo_db_action_describe_table) | Returns information about a single existing table |
+| [*AWS_DYNAMO_DB_ACTION_GET_ITEM*](#aws_dynamo_db_action_get_item) | Returns a single existing item|
+| [*AWS_DYNAMO_DB_ACTION_LIST_TABLES*](#aws_dynamo_db_action_list_tables) | Returns a list of table names |
+| [*AWS_DYNAMO_DB_ACTION_PUT_ITEM*](#aws_dynamo_db_action_put_item) | Uploads a single item |
+| [*AWS_DYNAMO_DB_ACTION_QUERY*](#aws_dynamo_db_action_query) | Initiate a database query operation |
+| [*AWS_DYNAMO_DB_ACTION_SCAN*](#aws_dynamo_db_action_scan) | Returns one or more items and item attributes |
+| [*AWS_DYNAMO_DB_ACTION_UPDATE_ITEM*](#aws_dynamo_db_action_update_item) | Modifies a single existing item |
+| [*AWS_DYNAMO_DB_ACTION_UPDATE_TABLE*](#aws_dynamo_db_action_update_table) | Modifies a single existing table |
 
 Specific actions of the types [listed above](#action-types) are configured by passing information into *action()*’s *actionParams* parameter as a table with the following action type-specific keys.
 
@@ -166,8 +166,7 @@ The response table contains a key, *body*, which is a table that includes the fo
 ##### Example #####
 
 ```squirrel
-// writing to an existing table called testTable2
-// with key schema seen in create table
+// Writing to an existing table called testTable2 with key schema seen in create table
 local writeParams = {
   "RequestItems": {
     "testTable2": [
@@ -204,10 +203,10 @@ This action adds a new table to your account. In an AWS account, table names mus
 | *AttributeDefinitions* | Array of tables | Yes | See [here](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeDefinition.html) |
 | *KeySchema* | Array of tables | Yes | See [here](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_KeySchemaElement.html) |
 | *ProvisionedThroughput* | Table | Yes | See [here](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ProvisionedThroughput.html) |
-| *TableName* | String | Yes | N/A | The name of the table to create |
+| *TableName* | String | Yes | The name of the table to create |
 | *GlobalSecondaryIndexes* | Array of tables | No | See [here](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_GlobalSecondaryIndex.html). Default: `null` |
 | *LocalSecondaryIndexes* | Array of tables | No | See [here](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_LocalSecondaryIndex.html). Default: `null` |
-| *StreamSpecifiation* | Table | No | null | See [here](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_StreamSpecification.html). Default: `null` |
+| *StreamSpecifiation* | Table | No | See [here](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_StreamSpecification.html). Default: `null` |
 
 ##### Response #####
 
@@ -510,7 +509,7 @@ db.action(AWS_DYNAMO_DB_ACTION_PUT_ITEM, putParams, function(response) {
 
 #### AWS_DYNAMO_DB_ACTION_QUERY ####
 
-This action is a query operation tha uses the primary key of a table or a secondary index to directly access items from that table or index. For more details please see the [AWS DynamoDB documentation](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html).
+This action is a query operation that uses the primary key of a table or a secondary index to directly access items from that table or index. For more details please see the [AWS DynamoDB documentation](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html).
 
 ##### Parameters Table Keys #####
 
@@ -580,7 +579,7 @@ This action returns one or more items and item attributes by accessing every ite
 | *IndexName* | String | No | The name of a secondary index to scan. Default: `null` |
 | *Limit* | Integer | No | The maximum number of items to evaluate (not necessarily the number of matching items). Default: 1 |
 | *ProjectionExpression* | String | No | A string that identifies one or more attributes to retrieve from the table. Default: `null` |
-| *ReturnConsumedCapacity* | String | No | NONE | Valid values: *INDEXES, TOTAL, NONE*.<br />*INDEXES* returns aggregate *ConsumedCapacity* for the operation, and *ConsumedCapacity* for each table and secondary index.<br />*TOTAL* returns only aggregate *ConsumedCapacity*.<br />*NONE* (default) returns no *ConsumedCapacity* details |
+| *ReturnConsumedCapacity* | String | No | Valid values: *INDEXES, TOTAL, NONE*.<br />*INDEXES* returns aggregate *ConsumedCapacity* for the operation, and *ConsumedCapacity* for each table and secondary index.<br />*TOTAL* returns only aggregate *ConsumedCapacity*.<br />*NONE* (default) returns no *ConsumedCapacity* details |
 | *Segment* | Integer | No | For a parallel scan request, *Segment* identifies an individual segment to be scanned by an application worker. Default: `null` |
 | *Select* | String | No | The attributes to be returned in the result. You can retrieve all item attributes, specific item attributes, the count of matching items, or in the case of an index, some or all of the attributes projected into the index. Default: `null` |
 | *TotalSegments* | Integer | No | For a parallel scan request, *TotalSegments* represents the total number of segments into which the scan operation will be divided. Default: `null` |
@@ -629,7 +628,7 @@ This action updates an existing item.For more details please see the [AWS Dynamo
 | *ExpressionAttributeValues* | Table | No | One or more values that can be substituted in an expression. Default: `null` |
 | *ReturnConsumedCapacity* | String | No | Valid values: *INDEXES, TOTAL, NONE*.<br />*INDEXES* returns aggregate *ConsumedCapacity* for the operation, and *ConsumedCapacity* for each table and secondary index.<br />*TOTAL* returns only aggregate *ConsumedCapacity*.<br />*NONE* (default) returns no *ConsumedCapacity* details |
 | *ReturnItemCollectionMetrics* | String | No | Determines whether item collection metrics are returned. If set to *SIZE*, the response includes statistics about item collections. If set to *NONE* (default), no statistics are returned |
-| *ReturnValues* | String | No | Use *ReturnValues* if you want to get the item attributes as they appeared either before or after they were updated. Use *ALL_OLD* for all attributes prior to being changed; *All_NEW* for all attributes after the change; *UPDATED_OLD* for all attributes that were changed but returns values prior to change; *UPDATED_NEW for all attributes that were changed but returns values after the change; or *NONE* (default) to have nothing returned |
+| *ReturnValues* | String | No | Valid values: *ALL_OLD, All_NEW, UPDATED_OLD, UPDATED_NEW, NONE*, Use *ReturnValues* if you want to get the item attributes as they appeared either before or after they were updated. Use *ALL_OLD* for all attributes prior to being changed; *All_NEW* for all attributes after the change; *UPDATED_OLD* for all attributes that were changed but returns values prior to change; *UPDATED_NEW* for all attributes that were changed but returns values after the change; or *NONE* (default) to have nothing returned |
 | *UpdateExpression* | String | No | An expression that defines one or more attributes to be updated, the action to be performed on them, and new value(s) for them. Default: `null` |
 
 ##### Response #####
