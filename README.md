@@ -60,7 +60,7 @@ The format of the response table general to all callback functions.
 | --- | --- | --- |
 | *body* | String | A DynamoDB response in a function specific structure that is JSON encoded. See each action parameter response, below, for details |
 | *statuscode* | Integer | An HTTP status code |
-| *headers* | Table | See ‘Headers’, below |
+| *headers* | Table | See [‘Headers’](#headers), below |
 
 #### Headers ####
 
@@ -151,7 +151,7 @@ This action puts or deletes multiple items into or from one or more tables. For 
 | --- | --- | --- | --- |
 | *RequestItems* | Table | Yes | See [here](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_WriteRequest.html) |
 | *ReturnConsumedCapacity* | String | No | Valid values: *INDEXES, TOTAL, NONE*.<br />*INDEXES* returns aggregate *ConsumedCapacity* for the operation, and *ConsumedCapacity* for each table and secondary index.<br />*TOTAL* returns only aggregate *ConsumedCapacity*.<br />*NONE* (default) returns no *ConsumedCapacity* details |
-| *ReturnItemCollectionMetrics* | String | No | Determines whether item collection metrics are returned. If set to *SIZE*, the response includes statistics about item collections. If set to *NONE* (default), no statistics are returned |
+| *ReturnItemCollectionMetrics* | String | No | Valid values: *SIZE, NONE*.<br />Determines whether item collection metrics are returned. If set to *SIZE*, the response includes statistics about item collections. If set to *NONE* (default), no statistics are returned |
 
 #### Response ####
 
@@ -260,8 +260,8 @@ This action deletes a single item in a table by primary key. For more detail ple
 | *ExpressionAttributeNames* | Table | No | One or more substitution tokens for attribute names in an expression. Default: `null` |
 | *ExpressionAttributeValues* | Table | No | One or more values that can be substituted in an expression. Default: `null` |
 | *ReturnConsumedCapacity* | String | No | Valid values: *INDEXES, TOTAL, NONE*.<br />*INDEXES* returns aggregate *ConsumedCapacity* for the operation, and *ConsumedCapacity* for each table and secondary index.<br />*TOTAL* returns only aggregate *ConsumedCapacity*.<br />*NONE* (default) returns no *ConsumedCapacity* details |
-| *ReturnItemCollectionMetrics* | String | No | Determines whether item collection metrics are returned. If set to *SIZE*, the response includes statistics about item collections. If set to *NONE* (default), no statistics are returned |
-| *ReturnValues* | String | No | Use *ALL_OLD* if you want to get the item attributes as they appeared before they were deleted, else *NONE* (default) where nothing is returned |
+| *ReturnItemCollectionMetrics* | String | No | Valid values: *SIZE, NONE*.<br />Determines whether item collection metrics are returned. If set to *SIZE*, the response includes statistics about item collections. If set to *NONE* (default), no statistics are returned |
+| *ReturnValues* | String | No | Valid values: *ALL_OLD, NONE*.<br />Use *ALL_OLD* if you want to get the item attributes as they appeared before they were deleted, else *NONE* (default) where nothing is returned |
 
 #### Response ####
 
@@ -475,8 +475,8 @@ This action creates a new item, or replaces an old item with a new item. For mor
 | *ExpressionAttributeNames* | Table | No | One or more substitution tokens for attribute names in an expression. Default: `null` |
 | *ExpressionAttributeValues* | Table | No | One or more values that can be substituted in an expression (see [here](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeValue.html)). Default: `null` |
 | *ReturnConsumedCapacity* | String | No | Valid values: *INDEXES, TOTAL, NONE*.<br />*INDEXES* returns aggregate *ConsumedCapacity* for the operation, and *ConsumedCapacity* for each table and secondary index.<br />*TOTAL* returns only aggregate *ConsumedCapacity*.<br />*NONE* (default) returns no *ConsumedCapacity* details |
-| *ReturnItemCollectionMetrics* | String | No | Valid Values: *SIZE, NONE*. If set to *SIZE*, the response includes statistics about item collections. If set to *NONE* (default), no statistics are returned |
-| *ReturnValues* | String | No | Valid Values: *ALL_OLD, NONE*. If set to *ALL_OLD*, then if the action overwrote an attribute name-value pair, the content of the old item is returned. If set to *NONE* (default), nothing is returned |
+| *ReturnItemCollectionMetrics* | String | No | Valid Values: *SIZE, NONE*.<br />If set to *SIZE*, the response includes statistics about item collections. If set to *NONE* (default), no statistics are returned |
+| *ReturnValues* | String | No | Valid Values: *ALL_OLD, NONE*.<br />If set to *ALL_OLD*, then if the action overwrote an attribute name-value pair, the content of the old item is returned. If set to *NONE* (default), nothing is returned |
 
 #### Response ####
 
@@ -628,7 +628,7 @@ This action updates an existing item.For more details please see the [AWS Dynamo
 | *ExpressionAttributeValues* | Table | No | One or more values that can be substituted in an expression. Default: `null` |
 | *ReturnConsumedCapacity* | String | No | Valid values: *INDEXES, TOTAL, NONE*.<br />*INDEXES* returns aggregate *ConsumedCapacity* for the operation, and *ConsumedCapacity* for each table and secondary index.<br />*TOTAL* returns only aggregate *ConsumedCapacity*.<br />*NONE* (default) returns no *ConsumedCapacity* details |
 | *ReturnItemCollectionMetrics* | String | No | Determines whether item collection metrics are returned. If set to *SIZE*, the response includes statistics about item collections. If set to *NONE* (default), no statistics are returned |
-| *ReturnValues* | String | No | Valid values: *ALL_OLD, All_NEW, UPDATED_OLD, UPDATED_NEW, NONE*, Use *ReturnValues* if you want to get the item attributes as they appeared either before or after they were updated. Use *ALL_OLD* for all attributes prior to being changed; *All_NEW* for all attributes after the change; *UPDATED_OLD* for all attributes that were changed but returns values prior to change; *UPDATED_NEW* for all attributes that were changed but returns values after the change; or *NONE* (default) to have nothing returned |
+| *ReturnValues* | String | No | Valid values: *ALL_OLD, All_NEW, UPDATED_OLD, UPDATED_NEW, NONE*.<br />Use *ReturnValues* if you want to get the item attributes as they appeared either before or after they were updated. Use *ALL_OLD* for all attributes prior to being changed; *All_NEW* for all attributes after the change; *UPDATED_OLD* for all attributes that were changed but returns values prior to change; *UPDATED_NEW* for all attributes that were changed but returns values after the change; or *NONE* (default) to have nothing returned |
 | *UpdateExpression* | String | No | An expression that defines one or more attributes to be updated, the action to be performed on them, and new value(s) for them. Default: `null` |
 
 #### Response ####
