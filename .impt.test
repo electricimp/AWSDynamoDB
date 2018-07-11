@@ -1,0 +1,14 @@
+{
+  "deviceGroupId": "8bfcc027-a053-f959-3f68-172ca7f34243",
+  "deviceGoupName" : "impFarm Q",
+  "timeout": 120,
+  "stopOnFail": false,
+  "allowDisconnect": false,
+  "builderCache": false,
+  "testFiles": [
+    "*.test.nut",
+    "tests/**/*.test.nut"
+  ],
+  "deviceFile": false,
+  "agentFile": "AWSDynamoDB.agent.lib.nut"
+}
