@@ -4,20 +4,14 @@ The instructions will show you how to set up the tests for AWS DynamoDB.
 
 ## Configure the API keys for DynamoDB
 
-Testing requires AWS access keys. For instructions on how to create keys see the README included in the example folder. At the top of the .test.nut files find the three constants that need to be configured and enter your credentials.
+Testing requires AWS access keys. For instructions on how to create keys, please see the [README file included in the example folder](../example/README.md).
 
-**Note:** Once you have added keys to the test code it should be treated carefully, and not checked into version control!
-
-Parameter                    | Description
----------------------------- | -----------
-AWS_DYNAMO_REGION            | AWS region (e.g. "us-west-2")
-AWS_DYNAMO_ACCESS_KEY_ID     | IAM Access Key ID
-AWS_DYNAMO_SECRET_ACCESS_KEY | IAM Secret Access Key
+Once keys are created you can store them as environment variables named: *DYNAMO_ACCESS_KEY_ID*, *DYNAMO_SECRET_ACCESS_KEY*, and *DYNAMO_REGION*, or you can copy and paste them into the test code *AWS Key* constants. Please note if you have added keys to the test code it should be treated carefully and **not checked into version control**.
 
 ## Imptest
 
-Please update the `.impt.test` file with a deviceGroupId for your account, and make sure you have a device assigned to that device group.
-From the command line run `impt test run`.
+In the `.impt.test` file update the **deviceGroupId** to a device group in your impCentral account, and check that the **agentFile** is set to *AWSDynamoDB.agent.lib.nut*. Make sure all test code includes the *AWSRequestV4 library*.
+From the *AWSDynamoDB* directory, log into your account and then enter `impt test run` into the command line.
 
 # License
 

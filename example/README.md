@@ -16,7 +16,7 @@ An IAM policy defines certain permissions within AWS. You will need to create on
 1. Select **Policies** from the menu on the left.
 1. Click **Create Policy**.
 1. On the **Create Policy** page do the following:
-    1. Click **Service* or **Choose a service**, then locate and select **DynamoDB**.
+    1. Click **Service** or **Choose a service**, then locate and select **DynamoDB**.
     1. Click **Actions** under **Manual Actions**, then check **All DynamoDB actions(dynamodb:*)** (this will trigger four warnings).
     1. Click **Resources** and select **All resources** (this should resolve the warnings).
     1. Click the **Review policy** button.

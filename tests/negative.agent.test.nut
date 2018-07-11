@@ -25,9 +25,9 @@
 @include "github:electricimp/AWSRequestV4/AWSRequestV4.class.nut"
 
 // Enter your AWS keys here
-const AWS_DYNAMO_ACCESS_KEY_ID = "YOUR_KEY_ID_HERE";
-const AWS_DYNAMO_SECRET_ACCESS_KEY = "YOUR_KEY_HERE";
-const AWS_DYNAMO_REGION = "YOUR_REGION_HERE";
+const AWS_DYNAMO_ACCESS_KEY_ID     = "@{DYNAMO_ACCESS_KEY_ID}";
+const AWS_DYNAMO_SECRET_ACCESS_KEY = "@{DYNAMO_SECRET_ACCESS_KEY}";
+const AWS_DYNAMO_REGION            = "@{DYNAMO_REGION}";
 
 // http status codes
 const AWS_TEST_HTTP_RESPONSE_SUCCESS = 200;
