@@ -1,5 +1,5 @@
 {
-  "deviceGroupId": "d51fc3f4-f818-f7e9-8a93-a7e392a9480d	",
+  "deviceGroupId": "d51fc3f4-f818-f7e9-8a93-a7e392a9480d",
   "deviceGroupName" : "impFarm P",
   "timeout": 120,
   "stopOnFail": false,
