@@ -11,6 +11,8 @@
 #require "AWSDynamoDB.agent.lib.nut:1.0.0"
 ```
 
+![Build Status](https://cse-ci.electricimp.com/app/rest/builds/buildType:(id:AWSDynamoDB_BuildAndTest)/statusIcon)
+
 ## Class Usage ##
 
 ### Constructor: AWSDynamoDB(*region, accessKeyId, secretAccessKey*) ###
