@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright 2018 Electric Imp
+// Copyright 2018-2019 Electric Imp
 //
 // SPDX-License-Identifier: MIT
 //
@@ -82,44 +82,79 @@ class DynamoDBNegativeTest extends ImpTestCase {
             "WriteCapacityUnits": 5
         };
 
-        return Promise(function(resolve, reject) {
+                // class initialisation
+        _db = AWSDynamoDB(AWS_DYNAMO_REGION, AWS_DYNAMO_ACCESS_KEY_ID, AWS_DYNAMO_SECRET_ACCESS_KEY);
 
-            // class initialisation
-            _db = AWSDynamoDB(AWS_DYNAMO_REGION, AWS_DYNAMO_ACCESS_KEY_ID, AWS_DYNAMO_SECRET_ACCESS_KEY);
+        local params = null;
 
-            local randNum = (1.0 * math.rand() / RAND_MAX) * (1000 + 1);
-            _tablename = "testTable." + randNum;
-            local params = {
-                "AttributeDefinitions": _AttributeDefinitions,
-                "KeySchema": _KeySchema,
-                "ProvisionedThroughput": _ProvisionedThroughput,
-                "TableName": _tablename
-            };
+        return Promise(function (resolve, reject) {
+            params = { "ExclusiveStartTableName": "testTable" };
 
-            // Create a table with random name per test testTable.randNum
-            _db.action(AWS_DYNAMO_DB_ACTION_CREATE_TABLE, params, function(res) {
-
-                // check status code indication successful creation
-                if (res.statuscode >= AWS_TEST_HTTP_RESPONSE_SUCCESS && res.statuscode < AWS_TEST_HTTP_RESPONSE_SUCCESS_UPPER_BOUND) {
-                    local describeParams = {
+            _db.action(AWS_DYNAMO_DB_ACTION_LIST_TABLES, params, function (response) {
+                if (response.statuscode >= 200 && response.statuscode < 300) {
+                    local arrayOfTableNames = http.jsondecode(response.body).TableNames;
+                    local tableCount = arrayOfTableNames.len();
+                    // skip DB cleaning
+                    if (tableCount == 0) resolve(true);
+                    else this.info("DB is cleaning...");
+                    // delete all tables from DB
+                    foreach(tableName in arrayOfTableNames) {
+                        params = { "TableName": tableName };
+                        describeAndDeleteTable(params, function (result) {
+                            if (result == true) {
+                                tableCount--;
+                                if (tableCount <= 0) {
+                                    this.info("DB cleaned successfuly");
+                                    resolve(true);
+                                }
+                            } else {
+                                server.log("error " + result);
+                                reject("Error during DB clean occurred");
+                            }
+                        }.bindenv(this));
+                    }
+                } else {
+                    server.log("error " + response.statuscode);
+                    reject("Error during DB clean occurred");
+                }
+            }.bindenv(this));
+        }.bindenv(this)).
+            then(function (result) {
+                return Promise(function (resolve, reject) {
+                    local randNum = (1.0 * math.rand() / RAND_MAX) * (1000 + 1);
+                    _tablename = "testTable." + randNum;
+                    params = {
+                        "AttributeDefinitions": _AttributeDefinitions,
+                        "KeySchema": _KeySchema,
+                        "ProvisionedThroughput": _ProvisionedThroughput,
                         "TableName": _tablename
                     };
 
-                    // wait for the table to finish being created
-                    // important as toomany request to awd _db will cause errors
-                    checkTable(describeParams, function(result) {
+                    // Create a table with random name per test testTable.randNum
+                    _db.action(AWS_DYNAMO_DB_ACTION_CREATE_TABLE, params, function (res) {
 
-                        if (typeof result == "bool" && result == true) {
-                            resolve("Running @{__FILE__}");
+                        // check status code indication successful creation
+                        if (res.statuscode >= AWS_TEST_HTTP_RESPONSE_SUCCESS && res.statuscode < AWS_TEST_HTTP_RESPONSE_SUCCESS_UPPER_BOUND) {
+                            local describeParams = {
+                                "TableName": _tablename
+                            };
+
+                            // wait for the table to finish being created
+                            // important as toomany request to awd _db will cause errors
+                            checkTable(describeParams, function (result) {
+
+                                if (typeof result == "bool" && result == true) {
+                                    resolve("Running negative.agent.test.nut");
+                                } else {
+                                    reject(result);
+                                }
+                            }.bindenv(this));
                         } else {
-                            reject(result);
+                            reject("Failed to create table during setup of negative.agent.test.nut. Statuscode: " + res.statuscode + ". Message: " + http.jsondecode(res.body).message);
                         }
                     }.bindenv(this));
-                } else {
-                    reject("Failed to create table during setup of @{__FILE__}. Statuscode: " + res.statuscode + ". Message: " + http.jsondecode(res.body).message);
-                }
+                }.bindenv(this));
             }.bindenv(this));
-        }.bindenv(this));
     }
 
     // To be called by the setup() method
