@@ -144,13 +144,13 @@ class DynamoDBNegativeTest extends ImpTestCase {
                             checkTable(describeParams, function (result) {
 
                                 if (typeof result == "bool" && result == true) {
-                                    resolve("Running negative.agent.test.nut");
+                                    resolve("Running @{__FILE__}");
                                 } else {
                                     reject(result);
                                 }
                             }.bindenv(this));
                         } else {
-                            reject("Failed to create table during setup of negative.agent.test.nut. Statuscode: " + res.statuscode + ". Message: " + http.jsondecode(res.body).message);
+                            reject("Failed to create table during setup of @{__FILE__}. Statuscode: " + res.statuscode + ". Message: " + http.jsondecode(res.body).message);
                         }
                     }.bindenv(this));
                 }.bindenv(this));
