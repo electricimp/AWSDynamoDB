@@ -22,365 +22,421 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
+// Include library dependencies
 @include "github:electricimp/AWSRequestV4/AWSRequestV4.class.nut"
+// Tests need updated Promise library (need bug fix for series)
+@include "github:electricimp/Promise/Promise.lib.nut"
 
 // Enter your AWS keys here
 const AWS_DYNAMO_ACCESS_KEY_ID     = "@{DYNAMO_ACCESS_KEY_ID}";
 const AWS_DYNAMO_SECRET_ACCESS_KEY = "@{DYNAMO_SECRET_ACCESS_KEY}";
 const AWS_DYNAMO_REGION            = "@{DYNAMO_REGION}";
 
-// http status codes
-const AWS_TEST_HTTP_RESPONSE_SUCCESS = 200;
-const AWS_TEST_HTTP_RESPONSE_SUCCESS_UPPER_BOUND = 300;
-const AWS_TEST_HTTP_RESPONSE_FORBIDDEN = 403;
-const AWS_TEST_HTTP_RESPONSE_NOT_FOUND = 404;
-const AWS_TEST_HTTP_RESPONSE_BAD_REQUEST = 400;
+// HTTP status codes
+enum AWS_DYNAMO_TEST_HTTP_STATUS_CODE {
+    SUCCESS_LOWER_BOUND = 200,
+    SUCCESS_UPPER_BOUND = 300,
+    FORBIDDEN           = 403,
+    NOT_FOUND           = 404,
+    BAD_REQUEST         = 400
+}
 
-// messages
-const AWS_TEST_UPDATE_VALUE = "this is a new value";
-const AWS_TEST_FAKE_TABLE_NAME = "garbage";
-const AWS_TEST_FAKE_TIME = 0;
+// AWS response error messages
+enum AWS_DYNAMO_TEST_ERROR {
+    CONVERT_TO_STRING_NUM_VALUE = "NUMBER_VALUE cannot be converted to String",
+    CONVERT_TO_STRING_BIG_NUM   = "class com.amazon.coral.value.json.numbers.TruncatingBigNumber can not be converted to an String",
+    REOSOURCE_NOT_FOUND         = "Requested resource not found",
+    PARAMETER_NOT_PRESENT       = "The parameter 'TableName' is required but was not present in the request",
+    LIMIT_100                   = "1 validation error detected: Value '200' at 'limit' failed to satisfy constraint: Member must have value less than or equal to 100",
+    TABLE_NOT_FOUND             = "Requested resource not found" // Note this is not the full error message "Requested resource not found: Table: <table-name> not found"
+}
 
-// aws response error messages
-const AWS_ERROR_CONVERT_TO_STRING = "NUMBER_VALUE cannot be converted to String";
-const AWS_ERROR_REOSOURCE_NOT_FOUND = "Requested resource not found";
-const AWS_ERROR_PARAMETER_NOT_PRESENT = "The parameter 'TableName' is required but was not present in the request";
-const AWS_ERROR_LIMIT_100 = "1 validation error detected: Value '200' at 'limit' failed to satisfy constraint: Member must have value less than or equal to 100";
+// Table Check Constants
+const AWS_DYNAMO_TEST_MSG_WAITING        = "Table status is not ACTIVE. Scheduling next check in 5 seconds..."
+const AWS_DYNAMO_TEST_ACTIVE_TIMEOUT     = 5; // This time should match the AWS_DYNAMO_TEST_MSG_WAITING message
+const AWS_DYNAMO_TEST_ACTIVE_TBL_RETRIES = 6;
 
-// info messages
-const AWS_TEST_WAITING_FOR_TABLE = "Table not created yet. Waiting 5 seconds before starting tests..."
+// Test data
+const AWS_DYNAMO_TEST_UPDATE_VALUE    = "this is a new value";
+const AWS_DYNAMO_TEST_FAKE_TABLE_NAME = "garbage";
+const AWS_DYNAMO_TEST_FAKE_TIME       = 0;
 
 class DynamoDBNegativeTest extends ImpTestCase {
 
-    _db = null;
-    _tablename = null;
-    _KeySchema = null;
-    _AttributeDefinitions = null;
+    _db                    = null;
+    _dbConfigured          = null;
+    _tablename             = null;
+    _KeySchema             = null;
+    _AttributeDefinitions  = null;
     _ProvisionedThroughput = null;
 
-
-    // instantiates the class (AWSDynamoDB) as _db
-    // Creates a table named testTable.randNum
+    // Initializes AWSDynamoDB instance: _db
+    // Creates a table: testTable.randNum
     function setUp() {
         // Parameters to set up categories for a table
-        _KeySchema = [{
-            "AttributeName": "deviceId",
-            "KeyType": "HASH"
-        }, {
-            "AttributeName": "time",
-            "KeyType": "RANGE"
-        }];
-        _AttributeDefinitions = [{
-            "AttributeName": "deviceId",
-            "AttributeType": "S"
-        }, {
-            "AttributeName": "time",
-            "AttributeType": "S"
-        }];
+        _KeySchema = [
+            {
+                "AttributeName" : "deviceId",
+                "KeyType"       : "HASH"
+            }, 
+            {
+                "AttributeName" : "time",
+                "KeyType"       : "RANGE"
+            }
+        ];
+        _AttributeDefinitions = [
+            {
+                "AttributeName" : "deviceId",
+                "AttributeType" : "S"
+            }, 
+            {
+                "AttributeName" : "time",
+                "AttributeType" : "S"
+            }
+        ];
         _ProvisionedThroughput = {
-            "ReadCapacityUnits": 5,
-            "WriteCapacityUnits": 5
+            "ReadCapacityUnits"  : 5,
+            "WriteCapacityUnits" : 5
         };
+        _dbConfigured = false;
 
-                // class initialisation
+        // Create class instance
         _db = AWSDynamoDB(AWS_DYNAMO_REGION, AWS_DYNAMO_ACCESS_KEY_ID, AWS_DYNAMO_SECRET_ACCESS_KEY);
 
-        local params = null;
-
-        return Promise(function (resolve, reject) {
-            params = { "ExclusiveStartTableName": "testTable" };
-
-            _db.action(AWS_DYNAMO_DB_ACTION_LIST_TABLES, params, function (response) {
-                if (response.statuscode >= 200 && response.statuscode < 300) {
-                    local arrayOfTableNames = http.jsondecode(response.body).TableNames;
-                    local tableCount = arrayOfTableNames.len();
-                    // skip DB cleaning
-                    if (tableCount == 0) resolve(true);
-                    else this.info("DB is cleaning...");
-                    // delete all tables from DB
-                    foreach(tableName in arrayOfTableNames) {
-                        params = { "TableName": tableName };
-                        describeAndDeleteTable(params, function (result) {
-                            if (result == true) {
-                                tableCount--;
-                                if (tableCount <= 0) {
-                                    this.info("DB cleaned successfuly");
-                                    resolve(true);
-                                }
-                            } else {
-                                server.log("error " + result);
-                                reject("Error during DB clean occurred");
-                            }
-                        }.bindenv(this));
-                    }
-                } else {
-                    server.log("error " + response.statuscode);
-                    reject("Error during DB clean occurred");
-                }
-            }.bindenv(this));
-        }.bindenv(this)).
-            then(function (result) {
-                return Promise(function (resolve, reject) {
-                    local randNum = (1.0 * math.rand() / RAND_MAX) * (1000 + 1);
-                    _tablename = "testTable." + randNum;
-                    params = {
-                        "AttributeDefinitions": _AttributeDefinitions,
-                        "KeySchema": _KeySchema,
-                        "ProvisionedThroughput": _ProvisionedThroughput,
-                        "TableName": _tablename
-                    };
-
-                    // Create a table with random name per test testTable.randNum
-                    _db.action(AWS_DYNAMO_DB_ACTION_CREATE_TABLE, params, function (res) {
-
-                        // check status code indication successful creation
-                        if (res.statuscode >= AWS_TEST_HTTP_RESPONSE_SUCCESS && res.statuscode < AWS_TEST_HTTP_RESPONSE_SUCCESS_UPPER_BOUND) {
-                            local describeParams = {
-                                "TableName": _tablename
-                            };
-
-                            // wait for the table to finish being created
-                            // important as toomany request to awd _db will cause errors
-                            checkTable(describeParams, function (result) {
-
-                                if (typeof result == "bool" && result == true) {
-                                    resolve("Running @{__FILE__}");
-                                } else {
-                                    reject(result);
-                                }
-                            }.bindenv(this));
-                        } else {
-                            reject("Failed to create table during setup of @{__FILE__}. Statuscode: " + res.statuscode + ". Message: " + http.jsondecode(res.body).message);
-                        }
-                    }.bindenv(this));
-                }.bindenv(this));
-            }.bindenv(this));
+        // Delete all DB tables, then configure a table for tests
+        return _getTables().then(_clearAndConfigure.bindenv(this), _onDBCleanupFail.bindenv(this));
     }
 
-    // To be called by the setup() method
-    // waits until table is active e.g finished creating then calls cb
-    function checkTable(params, cb) {
-
-        _db.action(AWS_DYNAMO_DB_ACTION_DESCRIBE_TABLE, params, function(res) {
-
-            if (res.statuscode >= AWS_TEST_HTTP_RESPONSE_SUCCESS && res.statuscode < AWS_TEST_HTTP_RESPONSE_SUCCESS_UPPER_BOUND) {
-                if (http.jsondecode(res.body).Table.TableStatus == "ACTIVE") {
-                    cb(true);
-                } else {
-                    this.info(AWS_TEST_WAITING_FOR_TABLE);
-                    imp.wakeup(5, function() {
-                        checkTable(params, cb);
-                    }.bindenv(this));
-                }
-            } else {
-                local msg = "Failed to describe table during setup of @{__FILE__}. Statuscode: " + res.statuscode + ". Message: " + http.jsondecode(res.body).message;
-                cb(msg);
-            }
-        }.bindenv(this));
-    }
-
-    // Checking that putting an item in a non-existent table returns
-    // a http status 400 and the correct error message reveived from aws
+    // Check that putting an item in a non-existent table returns HTTP
+    // statuscode 400 and the correct error message reveived from AWS
     function testFailPutItem() {
+        assertTrue(_dbConfigured, "DB is not configured. Aborting test.");
 
         local params = {
-            "TableName": AWS_TEST_FAKE_TABLE_NAME,
-            "Item": {
-                "deviceId": {
+            "TableName": AWS_DYNAMO_TEST_FAKE_TABLE_NAME,
+            "Item" : {
+                "deviceId" : {
                     "S": imp.configparams.deviceid
                 },
-                "time": {
-                    "S": time().tostring()
+                "time" : {
+                    "S" : time().tostring()
                 },
-                "status": {
-                    "BOOL": true
+                "status" : {
+                    "BOOL" : true
                 }
             }
         };
+
         return Promise(function(resolve, reject) {
-
-            _db.action(AWS_DYNAMO_DB_ACTION_PUT_ITEM, params, function(res) {
-
+            _db.action(AWS_DYNAMO_DB_ACTION_PUT_ITEM, params, function(resp) {
                 try {
-                    this.assertTrue(res.statuscode == AWS_TEST_HTTP_RESPONSE_BAD_REQUEST, "Actual status: " + res.statuscode);
-                    this.assertTrue(AWS_ERROR_REOSOURCE_NOT_FOUND == http.jsondecode(res.body).message, http.jsondecode(res.body).message)
-                    resolve("did not put item in non existent table");
-                } catch (e) {
-                    reject(e);
+                    local statuscode = resp.statuscode;
+                    assertEqual(statuscode, AWS_DYNAMO_TEST_HTTP_STATUS_CODE.BAD_REQUEST, "Received unexpected status code: " + statuscode);
+                    
+                    local respMsg = http.jsondecode(resp.body).message;
+                    assertEqual(respMsg, AWS_DYNAMO_TEST_ERROR.REOSOURCE_NOT_FOUND, "Received unexpected error message from AWS: " + respMsg);
+
+                    return resolve("Put action request with bad params did not update DB table");
+                } catch (ex) {
+                    return reject("Put action request with bad params test failed with exception: " + ex);
                 }
             }.bindenv(this));
         }.bindenv(this));
     }
 
-    // Checking that putting a number in as string throws an error
-    // a http status 400 and the correct error message from aws
+    // Check that getting a number as string returns HTTP statuscode 400
+    // and the correct error message from AWS
     function testFailGetItem() {
+        assertTrue(_dbConfigured, "DB is not configured. Aborting test.");
+
         local getParams = {
-            "Key": {
-                "deviceId": {
-                    "S": imp.configparams.deviceid
-                },
-                "time": {
-                    "S": AWS_TEST_FAKE_TIME
-                }
-            },
-            "TableName": _tablename,
-            "AttributesToGet": [
-                "time", "status"
-            ],
-            "ConsistentRead": false
+            "TableName"       : _tablename,
+            "AttributesToGet" : ["time", "status"],
+            "ConsistentRead"  : false, 
+            "Key"             : {
+                "deviceId" : {"S" : imp.configparams.deviceid},
+                "time"     : {"S" : AWS_DYNAMO_TEST_FAKE_TIME}
+            }
         };
+
         return Promise(function(resolve, reject) {
-
-            _db.action(AWS_DYNAMO_DB_ACTION_GET_ITEM, getParams, function(res) {
-
+            _db.action(AWS_DYNAMO_DB_ACTION_GET_ITEM, getParams, function(resp) {
                 try {
-                    this.assertTrue(res.statuscode == AWS_TEST_HTTP_RESPONSE_BAD_REQUEST, "Actual status: " + res.statuscode);
-                    this.assertTrue(http.jsondecode(res.body).Message == AWS_ERROR_CONVERT_TO_STRING)
-                    resolve("did not put item in non existent table");
-                } catch (e) {
-                    reject(e);
+                    local statuscode = resp.statuscode;
+                    assertEqual(statuscode, AWS_DYNAMO_TEST_HTTP_STATUS_CODE.BAD_REQUEST, "Received unexpected status code: " + statuscode);
+                    
+                    // This action returns "Message" not "message"
+                    local respMsg = http.jsondecode(resp.body).Message; 
+                    assertEqual(respMsg, AWS_DYNAMO_TEST_ERROR.CONVERT_TO_STRING_NUM_VALUE, "Received unexpected error message from AWS: " + respMsg);
+
+                    return resolve("Get action request with bad params did not update DB table");
+                } catch (ex) {
+                    return reject("Get action request with bad params test failed with exception: " + ex);
                 }
             }.bindenv(this));
         }.bindenv(this));
     }
 
     // Try to update table without the tablename parameter
-    function testFailUpdateTable() {
+    function testFailUpdateItem() {
+        assertTrue(_dbConfigured, "DB is not configured. Aborting test.");
+
         local params = {
-            "ProvisionedThroughput": {
-                "ReadCapacityUnits": 6,
-                "WriteCapacityUnits": 6
+            "ProvisionedThroughput" : {
+                "ReadCapacityUnits"  : 6,
+                "WriteCapacityUnits" : 6
             }
         };
+
         return Promise(function(resolve, reject) {
-
-            _db.action(AWS_DYNAMO_DB_ACTION_UPDATE_TABLE, params, function(res) {
-
+            _db.action(AWS_DYNAMO_DB_ACTION_UPDATE_TABLE, params, function(resp) {
                 try {
-                    this.assertTrue(res.statuscode == AWS_TEST_HTTP_RESPONSE_BAD_REQUEST, res.statuscode)
-                    this.assertTrue(http.jsondecode(res.body).message == AWS_ERROR_PARAMETER_NOT_PRESENT, http.jsondecode(res.body).message)
-                    resolve();
-                } catch (e) {
-                    reject(e);
+                    local statuscode = resp.statuscode;
+                    assertEqual(statuscode, AWS_DYNAMO_TEST_HTTP_STATUS_CODE.BAD_REQUEST, "Received unexpected status code: " + statuscode);
+
+                    local respMsg = http.jsondecode(resp.body).message;
+                    assertEqual(respMsg, AWS_DYNAMO_TEST_ERROR.PARAMETER_NOT_PRESENT, "Received unexpected error message from AWS: " + respMsg);
+
+                    return resolve("Update action request with bad params did not update DB table");
+                } catch (ex) {
+                    return reject("Update action request with bad params test failed with exception: " + ex);
                 }
             }.bindenv(this));
         }.bindenv(this));
     }
 
-    // To be called by the UpdateTable method, checks when a table has finished
-    // updating its contained data
-    function checkTableUpdated(params, cb) {
+    function testFailListTables() {
+        assertTrue(_dbConfigured, "DB is not configured. Aborting test.");
 
-        _db.action(AWS_DYNAMO_DB_ACTION_DESCRIBE_TABLE, params, function(res) {
+        local params = {
+            "Limit" : 200
+        };
 
-            if (res.statuscode >= AWS_TEST_HTTP_RESPONSE_SUCCESS && res.statuscode < AWS_TEST_HTTP_RESPONSE_SUCCESS_UPPER_BOUND) {
-                if (http.jsondecode(res.body).Table.TableStatus == "ACTIVE") {
-                    cb(res);
-                } else {
-                    this.info("table not yet updated");
-                    imp.wakeup(5, function() {
+        return Promise(function(resolve, reject) {
+            _db.action(AWS_DYNAMO_DB_ACTION_LIST_TABLES, params, function(resp) {
+                try {
+                    local respMsg = http.jsondecode(resp.body).message;
+                    assertEqual(respMsg, AWS_DYNAMO_TEST_ERROR.LIMIT_100, "Received unexpected error message from AWS: " + respMsg);
 
-                        checkTableUpdated(params, cb);
-                    }.bindenv(this));
+                    return resolve("List action request with bad params failed with expected limit of 100 error");
+                } catch (ex) {
+                    return reject("List action request with bad params test failed with exception: " + ex);
                 }
-            } else {
-                local msg = "Failed to describe table . Statuscode: " + res.statuscode + ". Message: " + http.jsondecode(res.body).message;
-                cb(msg);
-            }
+            }.bindenv(this));
         }.bindenv(this));
     }
 
-    // To be called by the delete table test, determines when deletion is complete
-    function checkTableDeleted(params, cb) {
+    function tearDown() {
+        // Delete all DB tables
+        return _getTables().then(_clearDB.bindenv(this), _onDBCleanupFail.bindenv(this));
+    }
 
-        _db.action(AWS_DYNAMO_DB_ACTION_DESCRIBE_TABLE, params, function(res) {
+    // Setup and teardown helper functions that return Promises
+    // --------------------------------------------------------------------
 
-            if (res.statuscode >= AWS_TEST_HTTP_RESPONSE_SUCCESS && res.statuscode < AWS_TEST_HTTP_RESPONSE_SUCCESS_UPPER_BOUND) {
-                if (http.jsondecode(res.body).Table.TableStatus == "DELETING") {
-                    this.info("table not yet updated");
-                    imp.wakeup(5, function() {
+    function _getTables() {
+        return Promise(function (resolve, reject) {
+            local reqParams = { "ExclusiveStartTableName": "testTable" };
+            _db.action(AWS_DYNAMO_DB_ACTION_LIST_TABLES, reqParams, function(resp) {
+                try {
+                    local statuscode = resp.statuscode;
+                    if (!_respIsSuccessful(statuscode)) {
+                        // Unsuccessful response from Dynamo DB
+                        local errMsg = "Error requesting list of tables, status code: " + statuscode;
+                        return reject(errMsg);
+                    }
 
-                        checkTableUpdated(params, cb);
-                    }.bindenv(this));
-
-                } else {
-                    reject("NOT DELETED");
+                    local tblNames = http.jsondecode(resp.body).TableNames;
+                    return resolve(tblNames);
+                } catch(ex) {
+                    local errMsg = "Caught exception processing list of tables resonse: " + ex;
+                    return reject(errMsg);
                 }
-            } else {
-                cb(res);
-            }
+            }.bindenv(this));
         }.bindenv(this));
     }
 
-    // To be called by the testDeleteTable() testing method
-    function describeAndDeleteTable(params, cb) {
+    function _onDBCleanupFail(errMsg) {
+        // Setup failed. Clear DB instance, so we don't bother running any tests.
+        _dbConfigured = false;
+        // Return the error message
+        return errMsg;
+    }
 
-        _db.action(AWS_DYNAMO_DB_ACTION_DESCRIBE_TABLE, params, function(res) {
+    function _clearAndConfigure(tblNames) {
+        local tasks = _createDelQueue(tblNames);
+        return Promise.serial(tasks).then(_configureTestDB.bindenv(this), _onDBCleanupFail.bindenv(this));
+    }
 
-            if (res.statuscode >= AWS_TEST_HTTP_RESPONSE_SUCCESS && res.statuscode < AWS_TEST_HTTP_RESPONSE_SUCCESS_UPPER_BOUND) {
-                if (http.jsondecode(res.body).Table.TableStatus == "ACTIVE") {
-                    _db.action(AWS_DYNAMO_DB_ACTION_DELETE_TABLE, params, function(res) {
+    function _deleteTable(tblName) {
+        info("Starting ACTIVE check and delete for table: " + tblName);
+        // Don't resolve until retries have completed
+        return Promise(function(resolve, reject) {
+            local reqParams = { "TableName" : tblName };
+            // Loop to check that table is active
+            _checkTableIsActive(reqParams, AWS_DYNAMO_TEST_ACTIVE_TBL_RETRIES, true, function(errMsg) {
+                if (errMsg != null) return reject(errMsg);
 
-                        if (res.statuscode >= AWS_TEST_HTTP_RESPONSE_SUCCESS && res.statuscode < AWS_TEST_HTTP_RESPONSE_SUCCESS_UPPER_BOUND) {
-                            cb(true);
+                // Delete table
+                _db.action(AWS_DYNAMO_DB_ACTION_DELETE_TABLE, reqParams, function(resp) {
+                    local statuscode = resp.statuscode;
+
+                    if (!_respIsSuccessful(statuscode)) {
+                        // Create error if request was unsuccessful
+                        local err = _getRespErrMsg(resp, "Delete table request failed. ");
+                        return reject(err);
+                    }
+
+                    local successMsg = tblName + " table successfully deleted";
+                    info(successMsg)
+                    return resolve(successMsg);
+                }.bindenv(this));
+            }.bindenv(this));
+        }.bindenv(this))
+    }
+
+    function _configureTestDB(msg) {
+        // Parameter "msg" is a message from last task promise that resolved
+        return Promise(function(resolve, reject) {
+            // Create a random table name
+            local randNum = (1.0 * math.rand() / RAND_MAX) * (1000 + 1);
+            _tablename = "testTable." + randNum;
+
+            local reqParams = {
+                "AttributeDefinitions"  : _AttributeDefinitions,
+                "KeySchema"             : _KeySchema,
+                "ProvisionedThroughput" : _ProvisionedThroughput,
+                "TableName"             : _tablename
+            };
+
+            info("Creating test db: " + _tablename);
+            // Create a table with random name per test testTable.randNum
+            _db.action(AWS_DYNAMO_DB_ACTION_CREATE_TABLE, reqParams, function (resp) {
+                local statuscode = resp.statuscode;
+                // Handle unsuccessful response
+                info("Create table resp status code: " + statuscode);
+                if (!_respIsSuccessful(statuscode)) {
+                    local errMsg = _getRespErrMsg(resp, "Failed to create table during setup of  @{__FILE__}. ");
+                    return reject(errMsg);
+                }
+
+                local checkParams = {
+                    "TableName": _tablename
+                };
+
+                // Wait and check DB for table to become ACTIVE
+                imp.wakeup(AWS_DYNAMO_TEST_ACTIVE_TIMEOUT, function() {
+                    _checkTableIsActive(checkParams, AWS_DYNAMO_TEST_ACTIVE_TBL_RETRIES, false, function(errMsg) {
+                        if (errMsg == null) {
+                            _dbConfigured = true;
+                            return resolve("Setup for @{__FILE__} test complete");
                         } else {
-                            local msg = "Failed to delete a table. Statuscode: " + res.statuscode + ". Message: " + http.jsondecode(res.body).message;
-                            cb(msg);
+                            return reject(error);
                         }
                     }.bindenv(this));
-                } else {
-                    this.info("Table not created yet. Waiting 5 seconds before deleting...");
-                    imp.wakeup(5, function() {
+                }.bindenv(this));
+            }.bindenv(this));
+        }.bindenv(this));
+    }
 
-                        describeAndDeleteTable(params, cb);
-                    }.bindenv(this));
-                }
-            } else {
-                local msg = "Failed to describe a table (prior to deleting). Statuscode: " + res.statuscode + ". Message: " + http.jsondecode(res.body).message;
-                cb(msg);
+    function _clearDB(tblNames) {
+        local tasks = _createDelQueue(tblNames);
+        return Promise.serial(tasks).then(
+            function(msg) { 
+                // Parameter "msg" is a message from last task promise that resolved
+                _db = null;
+                return "DB tables deleted, teardown for @{__FILE__} tests complete"; 
+            }.bindenv(this), 
+            _onDBCleanupFail.bindenv(this)
+        );        
+    }
+
+    // // Helper functions
+    // // --------------------------------------------------------------------
+
+    function _createDelQueue(tblNames) {
+        local numTbls = tblNames.len();
+        local tasks = [];
+
+        if (numTbls == 0) {
+            return tasks;
+        }
+
+        info("Found " + numTbls + " table(s)");
+        foreach(name in tblNames) {
+            info("Adding delete table task for table: " + name);
+            local tblName = name;
+            local delTbl = function() {
+                return _deleteTable(tblName);
             }
-        }.bindenv(this));
+            tasks.push(delTbl.bindenv(this));
+        }
+
+        return tasks;
     }
 
-    // return an array of TableNames
-    // Limit is maximum of 100
-    function testFailListTables() {
+    // Loop that checks that a table is ACTIVE
+    function _checkTableIsActive(reqParams, ctr, areDeleting, onDone) {
+        _db.action(AWS_DYNAMO_DB_ACTION_DESCRIBE_TABLE, reqParams, function(resp) {
+            local statuscode = resp.statuscode;
+            if (!_respIsSuccessful(statuscode)) {
+                // TODO: If too many requests error continues to be an issue add a check/handle
+                // error "The rate of control plane requests made by this account is too high"
 
-        local params = {
-            "Limit": 200
-        };
-        return Promise(function(resolve, reject) {
-
-            _db.action(AWS_DYNAMO_DB_ACTION_LIST_TABLES, params, function(res) {
-
-                try {
-                    this.assertTrue(http.jsondecode(res.body).message == AWS_ERROR_LIMIT_100, http.jsondecode(res.body).message);
-                    resolve("Limit of 100");
-                } catch (e) {
-                    reject(e);
-                }
-
-            }.bindenv(this));
-        }.bindenv(this));
-    }
-
-    // deletes the table used throughout the tests
-    function tearDown() {
-
-        return Promise(function(resolve, reject) {
-
-            local params = {
-                "TableName": _tablename
-            };
-            describeAndDeleteTable(params, function(result) {
-
-                if (typeof result == "bool" && result == true) {
-                    resolve("Finished testing and cleaned up after @{__FILE__}");
+                local errMsg = _getRespErrMsg(resp, "Describe table request failed. ");
+                if (areDeleting && statuscode == AWS_DYNAMO_TEST_HTTP_STATUS_CODE.BAD_REQUEST 
+                    && errMsg.find(AWS_DYNAMO_TEST_ERROR.TABLE_NOT_FOUND) != null) {
+                    // Trigger success flow if we were trying to delete the table
+                    info("Table no longer exists");
+                    onDone(null);
                 } else {
-                    reject("Finished testing but failed to clean up after @{__FILE__}");
+                    onDone(errMsg);
                 }
+                return;
+            }
+
+            try {
+                local status = http.jsondecode(resp.body).Table.TableStatus;
+                info("Table status: " + status);
+                if (status == "ACTIVE") {
+                    // Table active and ready to delete
+                    onDone(null);
+                    return;
+                }
+            } catch(ex) {
+                info("Error parsing describe table response: " + ex);
+                info(resp.body);
+            }
+
+            if (ctr-- == 0) {
+                local errMsg = "Table status is not ACTIVE after " + AWS_DYNAMO_TEST_ACTIVE_TBL_RETRIES + " checks";
+                onDone(errMsg);
+                return;
+            }
+
+            // Since request was successful, wait and make another request for table description
+            info(AWS_DYNAMO_TEST_MSG_WAITING);
+            // Back off requests to avoid rate limits
+            imp.wakeup(AWS_DYNAMO_TEST_ACTIVE_TIMEOUT, function() {
+                _checkTableIsActive(reqParams, ctr, areDeleting, onDone);
             }.bindenv(this));
         }.bindenv(this));
     }
+
+    function _respIsSuccessful(statuscode) {
+        return (statuscode >= AWS_DYNAMO_TEST_HTTP_STATUS_CODE.SUCCESS_LOWER_BOUND && 
+                statuscode < AWS_DYNAMO_TEST_HTTP_STATUS_CODE.SUCCESS_UPPER_BOUND);
+    }
+
+    function _getRespErrMsg(resp, baseMsg = "Dynamo DB request failed. ") {
+        local errMsg = baseMsg + "Statuscode: " + resp.statuscode;
+        try {
+            errMsg = errMsg + ". Message: " + http.jsondecode(resp.body).message;
+        } catch(ex) {
+            info("Error parsing response message: " + resp.body);
+            info(ex);
+        }
+        return errMsg;
+    }
+
 }
