@@ -48,13 +48,13 @@ enum AWS_DYNAMO_TEST_ERROR {
     REOSOURCE_NOT_FOUND         = "Requested resource not found",
     PARAMETER_NOT_PRESENT       = "The parameter 'TableName' is required but was not present in the request",
     LIMIT_100                   = "1 validation error detected: Value '200' at 'limit' failed to satisfy constraint: Member must have value less than or equal to 100",
-    TABLE_NOT_FOUND             = "Requested resource not found" // Note this is not the full error message "Requested resource not found: Table: <table-name> not found"
+    TABLE_NOT_FOUND             = "Requested resource not found" // Note: this is not the full error message "Requested resource not found: Table: <table-name> not found"
 }
 
 // Table Check Constants
 const AWS_DYNAMO_TEST_MSG_WAITING        = "Table status is not ACTIVE. Scheduling next check in 5 seconds..."
 const AWS_DYNAMO_TEST_ACTIVE_TIMEOUT     = 5; // This time should match the AWS_DYNAMO_TEST_MSG_WAITING message
-const AWS_DYNAMO_TEST_ACTIVE_TBL_RETRIES = 6;
+const AWS_DYNAMO_TEST_ACTIVE_TBL_RETRIES = 10;
 
 // Test data
 const AWS_DYNAMO_TEST_UPDATE_VALUE    = "this is a new value";
@@ -64,6 +64,7 @@ const AWS_DYNAMO_TEST_FAKE_TIME       = 0;
 class DynamoDBNegativeTest extends ImpTestCase {
 
     _db                    = null;
+    _deviceId              = null;
     _dbConfigured          = null;
     _tablename             = null;
     _KeySchema             = null;
@@ -99,9 +100,8 @@ class DynamoDBNegativeTest extends ImpTestCase {
             "WriteCapacityUnits" : 5
         };
         _dbConfigured = false;
-
-        // Create class instance
-        _db = AWSDynamoDB(AWS_DYNAMO_REGION, AWS_DYNAMO_ACCESS_KEY_ID, AWS_DYNAMO_SECRET_ACCESS_KEY);
+        _deviceId     = imp.configparams.deviceid;
+        _db           = AWSDynamoDB(AWS_DYNAMO_REGION, AWS_DYNAMO_ACCESS_KEY_ID, AWS_DYNAMO_SECRET_ACCESS_KEY);
 
         // Delete all DB tables, then configure a table for tests
         return _getTables().then(_clearAndConfigure.bindenv(this), _onDBCleanupFail.bindenv(this));
@@ -113,17 +113,11 @@ class DynamoDBNegativeTest extends ImpTestCase {
         assertTrue(_dbConfigured, "DB is not configured. Aborting test.");
 
         local params = {
-            "TableName": AWS_DYNAMO_TEST_FAKE_TABLE_NAME,
-            "Item" : {
-                "deviceId" : {
-                    "S": imp.configparams.deviceid
-                },
-                "time" : {
-                    "S" : time().tostring()
-                },
-                "status" : {
-                    "BOOL" : true
-                }
+            "TableName" : AWS_DYNAMO_TEST_FAKE_TABLE_NAME,
+            "Item"      : {
+                "deviceId" : { "S": _deviceId },
+                "time"     : { "S" : time().tostring() },
+                "status"   : { "BOOL" : true }
             }
         };
 
@@ -131,9 +125,9 @@ class DynamoDBNegativeTest extends ImpTestCase {
             _db.action(AWS_DYNAMO_DB_ACTION_PUT_ITEM, params, function(resp) {
                 try {
                     local statuscode = resp.statuscode;
-                    assertEqual(statuscode, AWS_DYNAMO_TEST_HTTP_STATUS_CODE.BAD_REQUEST, "Received unexpected status code: " + statuscode);
-                    
                     local respMsg = http.jsondecode(resp.body).message;
+
+                    assertEqual(statuscode, AWS_DYNAMO_TEST_HTTP_STATUS_CODE.BAD_REQUEST, "Received unexpected status code: " + statuscode);
                     assertEqual(respMsg, AWS_DYNAMO_TEST_ERROR.REOSOURCE_NOT_FOUND, "Received unexpected error message from AWS: " + respMsg);
 
                     return resolve("Put action request with bad params did not update DB table");
@@ -151,11 +145,11 @@ class DynamoDBNegativeTest extends ImpTestCase {
 
         local getParams = {
             "TableName"       : _tablename,
-            "AttributesToGet" : ["time", "status"],
+            "AttributesToGet" : [ "time", "status" ],
             "ConsistentRead"  : false, 
             "Key"             : {
-                "deviceId" : {"S" : imp.configparams.deviceid},
-                "time"     : {"S" : AWS_DYNAMO_TEST_FAKE_TIME}
+                "deviceId" : { "S" : _deviceId },
+                "time"     : { "S" : AWS_DYNAMO_TEST_FAKE_TIME }
             }
         };
 
@@ -163,10 +157,10 @@ class DynamoDBNegativeTest extends ImpTestCase {
             _db.action(AWS_DYNAMO_DB_ACTION_GET_ITEM, getParams, function(resp) {
                 try {
                     local statuscode = resp.statuscode;
-                    assertEqual(statuscode, AWS_DYNAMO_TEST_HTTP_STATUS_CODE.BAD_REQUEST, "Received unexpected status code: " + statuscode);
-                    
-                    // This action returns "Message" not "message"
+                    // NOTE: This action returns "Message" not "message"
                     local respMsg = http.jsondecode(resp.body).Message; 
+
+                    assertEqual(statuscode, AWS_DYNAMO_TEST_HTTP_STATUS_CODE.BAD_REQUEST, "Received unexpected status code: " + statuscode);
                     assertEqual(respMsg, AWS_DYNAMO_TEST_ERROR.CONVERT_TO_STRING_NUM_VALUE, "Received unexpected error message from AWS: " + respMsg);
 
                     return resolve("Get action request with bad params did not update DB table");
@@ -192,9 +186,9 @@ class DynamoDBNegativeTest extends ImpTestCase {
             _db.action(AWS_DYNAMO_DB_ACTION_UPDATE_TABLE, params, function(resp) {
                 try {
                     local statuscode = resp.statuscode;
-                    assertEqual(statuscode, AWS_DYNAMO_TEST_HTTP_STATUS_CODE.BAD_REQUEST, "Received unexpected status code: " + statuscode);
-
                     local respMsg = http.jsondecode(resp.body).message;
+
+                    assertEqual(statuscode, AWS_DYNAMO_TEST_HTTP_STATUS_CODE.BAD_REQUEST, "Received unexpected status code: " + statuscode);
                     assertEqual(respMsg, AWS_DYNAMO_TEST_ERROR.PARAMETER_NOT_PRESENT, "Received unexpected error message from AWS: " + respMsg);
 
                     return resolve("Update action request with bad params did not update DB table");
@@ -208,14 +202,13 @@ class DynamoDBNegativeTest extends ImpTestCase {
     function testFailListTables() {
         assertTrue(_dbConfigured, "DB is not configured. Aborting test.");
 
-        local params = {
-            "Limit" : 200
-        };
+        local params = { "Limit" : 200 };
 
         return Promise(function(resolve, reject) {
             _db.action(AWS_DYNAMO_DB_ACTION_LIST_TABLES, params, function(resp) {
                 try {
                     local respMsg = http.jsondecode(resp.body).message;
+                    
                     assertEqual(respMsg, AWS_DYNAMO_TEST_ERROR.LIMIT_100, "Received unexpected error message from AWS: " + respMsg);
 
                     return resolve("List action request with bad params failed with expected limit of 100 error");
@@ -234,9 +227,12 @@ class DynamoDBNegativeTest extends ImpTestCase {
     // Setup and teardown helper functions that return Promises
     // --------------------------------------------------------------------
 
+    // Makes LIST TABLES request with default params
+    // Returns a promise that resolves with array of table names or rejects with error message
     function _getTables() {
-        return Promise(function (resolve, reject) {
-            local reqParams = { "ExclusiveStartTableName": "testTable" };
+        local reqParams = { "ExclusiveStartTableName": "testTable" };
+
+        return Promise(function (resolve, reject) {    
             _db.action(AWS_DYNAMO_DB_ACTION_LIST_TABLES, reqParams, function(resp) {
                 try {
                     local statuscode = resp.statuscode;
@@ -252,27 +248,18 @@ class DynamoDBNegativeTest extends ImpTestCase {
                     local errMsg = "Caught exception processing list of tables resonse: " + ex;
                     return reject(errMsg);
                 }
-            }.bindenv(this));
-        }.bindenv(this));
+            }.bindenv(this)); // LIST TABLES closure
+        }.bindenv(this)); // Promise closure
     }
 
-    function _onDBCleanupFail(errMsg) {
-        // Setup failed. Clear DB instance, so we don't bother running any tests.
-        _dbConfigured = false;
-        // Return the error message
-        return errMsg;
-    }
-
-    function _clearAndConfigure(tblNames) {
-        local tasks = _createDelQueue(tblNames);
-        return Promise.serial(tasks).then(_configureTestDB.bindenv(this), _onDBCleanupFail.bindenv(this));
-    }
-
+    // Confirms table is active, then makes a request to delete
+    // Returns a promise that resolves/rejects with a message base on request statuscode
     function _deleteTable(tblName) {
         info("Starting ACTIVE check and delete for table: " + tblName);
+        local reqParams = { "TableName" : tblName };
+
         // Don't resolve until retries have completed
         return Promise(function(resolve, reject) {
-            local reqParams = { "TableName" : tblName };
             // Loop to check that table is active
             _checkTableIsActive(reqParams, AWS_DYNAMO_TEST_ACTIVE_TBL_RETRIES, true, function(errMsg) {
                 if (errMsg != null) return reject(errMsg);
@@ -280,80 +267,109 @@ class DynamoDBNegativeTest extends ImpTestCase {
                 // Delete table
                 _db.action(AWS_DYNAMO_DB_ACTION_DELETE_TABLE, reqParams, function(resp) {
                     local statuscode = resp.statuscode;
-
                     if (!_respIsSuccessful(statuscode)) {
                         // Create error if request was unsuccessful
                         local err = _getRespErrMsg(resp, "Delete table request failed. ");
                         return reject(err);
                     }
 
-                    local successMsg = tblName + " table successfully deleted";
-                    info(successMsg)
-                    return resolve(successMsg);
-                }.bindenv(this));
-            }.bindenv(this));
-        }.bindenv(this))
+                    return resolve(tblName + " table successfully deleted");
+                }.bindenv(this)); // DELETE TABLE closure
+            }.bindenv(this)); // _checkTableIsActive closure
+        }.bindenv(this)); // Promise closure
     }
 
-    function _configureTestDB(msg) {
-        // Parameter "msg" is a message from last task promise that resolved
+    // Creates a table with default the given table name and defualt params
+    // Returns a promise that resolves/rejects with a message base on request statuscode
+    function _createTable(tblName) {
+        info("Creating test db: " + tblName);
+        local checkParams = { "TableName": tblName };
+        local createParams = {
+            "AttributeDefinitions"  : _AttributeDefinitions,
+            "KeySchema"             : _KeySchema,
+            "ProvisionedThroughput" : _ProvisionedThroughput,
+            "TableName"             : tblName
+        };
+
         return Promise(function(resolve, reject) {
-            // Create a random table name
-            local randNum = (1.0 * math.rand() / RAND_MAX) * (1000 + 1);
-            _tablename = "testTable." + randNum;
-
-            local reqParams = {
-                "AttributeDefinitions"  : _AttributeDefinitions,
-                "KeySchema"             : _KeySchema,
-                "ProvisionedThroughput" : _ProvisionedThroughput,
-                "TableName"             : _tablename
-            };
-
-            info("Creating test db: " + _tablename);
             // Create a table with random name per test testTable.randNum
-            _db.action(AWS_DYNAMO_DB_ACTION_CREATE_TABLE, reqParams, function (resp) {
+            _db.action(AWS_DYNAMO_DB_ACTION_CREATE_TABLE, createParams, function (resp) {
                 local statuscode = resp.statuscode;
                 // Handle unsuccessful response
-                info("Create table resp status code: " + statuscode);
+                info("CREATE TABLE resp status code: " + statuscode);
                 if (!_respIsSuccessful(statuscode)) {
-                    local errMsg = _getRespErrMsg(resp, "Failed to create table during setup of  @{__FILE__}. ");
+                    local errMsg = _getRespErrMsg(resp, "CREATE TABLE " + tblName + " request failed. ");
                     return reject(errMsg);
                 }
-
-                local checkParams = {
-                    "TableName": _tablename
-                };
 
                 // Wait and check DB for table to become ACTIVE
                 imp.wakeup(AWS_DYNAMO_TEST_ACTIVE_TIMEOUT, function() {
                     _checkTableIsActive(checkParams, AWS_DYNAMO_TEST_ACTIVE_TBL_RETRIES, false, function(errMsg) {
-                        if (errMsg == null) {
-                            _dbConfigured = true;
-                            return resolve("Setup for @{__FILE__} test complete");
-                        } else {
-                            return reject(error);
-                        }
-                    }.bindenv(this));
-                }.bindenv(this));
-            }.bindenv(this));
-        }.bindenv(this));
+                        return (errMsg == null) ? resolve(tblName + " table CREATED and ACTIVE") : reject(errMsg);
+                    }.bindenv(this)); // _checkTableIsActive callback closure
+                }.bindenv(this)); // imp.wakeup closure
+            }.bindenv(this)); // CREATE TABLE closure
+        }.bindenv(this)); // Promise closure
     }
 
+    // Deletes all tables one at a time, then clears the _dbConfigured flag and the Dynamo DB instance
+    // Returns a promise that resolves/rejects with a message 
     function _clearDB(tblNames) {
         local tasks = _createDelQueue(tblNames);
-        return Promise.serial(tasks).then(
-            function(msg) { 
-                // Parameter "msg" is a message from last task promise that resolved
-                _db = null;
-                return "DB tables deleted, teardown for @{__FILE__} tests complete"; 
-            }.bindenv(this), 
-            _onDBCleanupFail.bindenv(this)
-        );        
+        return Promise.serial(tasks)
+            .then(
+                function(msg) { 
+                    info(msg);
+                    // Parameter "msg" is a message from last task promise that resolved
+                    _dbConfigured = false;
+                    _db = null;
+                    return "DB tables deleted, teardown for @{__FILE__} tests complete"; 
+                }.bindenv(this), 
+                _onDBCleanupFail.bindenv(this));        
+    }
+
+    // Deletes all tables one at a time, then creates a new default table & confirms table is active  
+    // Returns a promise that resolves/rejects with a message
+    function _clearAndConfigure(tblNames) {
+        local tasks = _createDelQueue(tblNames);
+        return Promise.serial(tasks).then(_configureTestDB.bindenv(this), _onDBCleanupFail.bindenv(this));
+    }
+
+    // Creates a table with a random number in the name, confirms table is active, if 
+    // creation is successful toggles _dbConfigured flag to true
+    // Returns a promise that resolves/rejects with a setup message 
+    function _configureTestDB(msg) {
+        // Parameter "msg" is a message from last task promise that resolved
+
+        // Create a random table name
+        local randNum = (1.0 * math.rand() / RAND_MAX) * (1000 + 1);
+        _tablename = "testTable." + randNum;
+
+        return _createTable(_tablename)
+            .then(
+                function(msg) {
+                    _dbConfigured = true;
+                    info(_tablename + " table CREATED and ACTIVE");
+                    return "Setup for @{__FILE__} test complete";
+                }.bindenv(this),
+                function(errMsg) {
+                    info(errMsg);
+                    return "Setup for @{__FILE__} failed";
+                }.bindenv(this));
     }
 
     // // Helper functions
     // // --------------------------------------------------------------------
 
+    // Toggles _dbConfigured to false returns error message
+    function _onDBCleanupFail(errMsg) {
+        // Setup failed. Clear DB instance, so we don't bother running any tests.
+        _dbConfigured = false;
+        // Return the error message
+        return errMsg;
+    }
+
+    // Creates & returns an array of _delete table promises
     function _createDelQueue(tblNames) {
         local numTbls = tblNames.len();
         local tasks = [];
@@ -375,15 +391,17 @@ class DynamoDBNegativeTest extends ImpTestCase {
         return tasks;
     }
 
-    // Loop that checks that a table is ACTIVE
+    // Loop for specified number of times, checking that a table is ACTIVE (or if table no longer exists)
     function _checkTableIsActive(reqParams, ctr, areDeleting, onDone) {
         _db.action(AWS_DYNAMO_DB_ACTION_DESCRIBE_TABLE, reqParams, function(resp) {
             local statuscode = resp.statuscode;
             if (!_respIsSuccessful(statuscode)) {
-                // TODO: If too many requests error continues to be an issue add a check/handle
+                // TODO: If too many requests error continues to be an issue, add a check/handle
                 // error "The rate of control plane requests made by this account is too high"
 
+                // Create error message
                 local errMsg = _getRespErrMsg(resp, "Describe table request failed. ");
+                // Check for areDeleting condition
                 if (areDeleting && statuscode == AWS_DYNAMO_TEST_HTTP_STATUS_CODE.BAD_REQUEST 
                     && errMsg.find(AWS_DYNAMO_TEST_ERROR.TABLE_NOT_FOUND) != null) {
                     // Trigger success flow if we were trying to delete the table
@@ -423,11 +441,13 @@ class DynamoDBNegativeTest extends ImpTestCase {
         }.bindenv(this));
     }
 
+    // Returns boolean if status code is in the successful range
     function _respIsSuccessful(statuscode) {
         return (statuscode >= AWS_DYNAMO_TEST_HTTP_STATUS_CODE.SUCCESS_LOWER_BOUND && 
                 statuscode < AWS_DYNAMO_TEST_HTTP_STATUS_CODE.SUCCESS_UPPER_BOUND);
     }
 
+    // Parses response to create and return an error message
     function _getRespErrMsg(resp, baseMsg = "Dynamo DB request failed. ") {
         local errMsg = baseMsg + "Statuscode: " + resp.statuscode;
         try {
