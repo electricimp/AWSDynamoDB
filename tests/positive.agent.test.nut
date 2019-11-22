@@ -47,7 +47,7 @@ enum AWS_DYNAMO_TEST_ERROR {
     REOSOURCE_NOT_FOUND         = "Requested resource not found",
     PARAMETER_NOT_PRESENT       = "The parameter 'TableName' is required but was not present in the request",
     LIMIT_100                   = "1 validation error detected: Value '200' at 'limit' failed to satisfy constraint: Member must have value less than or equal to 100",
-    TABLE_NOT_FOUND             = "Requested resource not found" // Note this is not the full error message "Requested resource not found: Table: <table-name> not found"
+    TABLE_NOT_FOUND             = "Requested resource not found" // Note: this is not the full error message "Requested resource not found: Table: <table-name> not found"
 }
 
 // Table Check Constants
@@ -60,10 +60,12 @@ const AWS_DYNAMO_TEST_UPDATE_VALUE    = "this is a new value";
 const AWS_DYNAMO_TEST_FAKE_TABLE_NAME = "garbage";
 const AWS_DYNAMO_TEST_FAKE_TIME       = 0;
 
-
+// NOTE: It take time for tables to respond to the commands sent. To ensure a table 
+// has processed a previous action check it's status with the DESCRIBE TABLE action 
 class DynamoDBPositiveTest extends ImpTestCase {
 
     _db                    = null;
+    _deviceId              = null;
     _dbConfigured          = null;
     _tablename             = null;
     _KeySchema             = null;
@@ -99,11 +101,10 @@ class DynamoDBPositiveTest extends ImpTestCase {
             "WriteCapacityUnits" : 5
         };
         _dbConfigured = false;
+        _deviceId     = imp.configparams.deviceid;
+        _db           = AWSDynamoDB(AWS_DYNAMO_REGION, AWS_DYNAMO_ACCESS_KEY_ID, AWS_DYNAMO_SECRET_ACCESS_KEY);
 
-        // Create class instance
-        _db = AWSDynamoDB(AWS_DYNAMO_REGION, AWS_DYNAMO_ACCESS_KEY_ID, AWS_DYNAMO_SECRET_ACCESS_KEY);
-
-                // Delete all DB tables, then configure a table for tests
+        // Delete all DB tables, then configure a table for tests
         return _getTables().then(_clearAndConfigure.bindenv(this), _onDBCleanupFail.bindenv(this));
     }
 
@@ -114,14 +115,13 @@ class DynamoDBPositiveTest extends ImpTestCase {
         assertTrue(_dbConfigured, "DB is not configured. Aborting test.");
         
         local expectedItemTime = time().tostring();
-
         local getParams = {
             "TableName"       : _tablename,
             "ConsistentRead"  : false,
-            "AttributesToGet" : ["time", "status"],
+            "AttributesToGet" : [ "time", "status" ],
             "Key"             : {
-                "deviceId" : {"S" : imp.configparams.deviceid},
-                "time"     : {"S" : expectedItemTime}
+                "deviceId" : { "S" : _deviceId },
+                "time"     : { "S" : expectedItemTime }
             }
         };
 
@@ -145,11 +145,11 @@ class DynamoDBPositiveTest extends ImpTestCase {
                                 return reject("GET ITEM test failed with exception: " + ex);
                             }
                         }.bindenv(this)); // GET ITEM closure
-                    }.bindenv(this)) // Promise closure
-                }.bindenv(this),
+                    }.bindenv(this)); // Promise closure
+                }.bindenv(this), // then onSuccess closure
                 function(errMsg) {
                     return "GET ITEM test failed:" + errMsg;
-                }.bindenv(this));
+                }.bindenv(this)); // then onFail & then closure
     }
 
     // Add a new item to an existing table
@@ -159,7 +159,6 @@ class DynamoDBPositiveTest extends ImpTestCase {
         assertTrue(_dbConfigured, "DB is not configured. Aborting test.");
 
         local expectedItemTime = time().tostring();
-
         local updateParams = {
             "TableName"                 : _tablename,
             "UpdateExpression"          : "SET newVal = :newVal",
@@ -168,8 +167,8 @@ class DynamoDBPositiveTest extends ImpTestCase {
                 ":newVal": { "S" : AWS_DYNAMO_TEST_UPDATE_VALUE }
             },
             "Key"                       : {
-                "deviceId" : {"S" : imp.configparams.deviceid},
-                "time"     : {"S" : expectedItemTime}
+                "deviceId" : { "S" : _deviceId },
+                "time"     : { "S" : expectedItemTime }
             }
         };
 
@@ -199,10 +198,10 @@ class DynamoDBPositiveTest extends ImpTestCase {
                             }
                         }.bindenv(this)); // UPDATE ITEM closure
                     }.bindenv(this)); // Promise closure
-                }.bindenv(this),
+                }.bindenv(this), // then onSuccess closure
                 function(errMsg) {
                     return "UPDATE ITEM test failed:" + errMsg;
-                }.bindenv(this));
+                }.bindenv(this)); // then onFail & then closure
     }
 
     // Deletes an item
@@ -211,13 +210,12 @@ class DynamoDBPositiveTest extends ImpTestCase {
         assertTrue(_dbConfigured, "DB is not configured. Aborting test.");
 
         local expectedItemTime = time().tostring();
-
         local deleteParams = {
             "TableName"    : _tablename,
             "ReturnValues" : "ALL_OLD",
             "Key"          : {
-                "deviceId": {"S" : imp.configparams.deviceid},
-                "time"    : {"S" : expectedItemTime}
+                "deviceId": { "S" : _deviceId },
+                "time"    : { "S" : expectedItemTime }
             }
         };
 
@@ -235,11 +233,11 @@ class DynamoDBPositiveTest extends ImpTestCase {
                                 return reject("DELETE ITEM test failed with exception: " + ex);
                             }
                         }.bindenv(this)); // DELETE ITEM closure
-                    }.bindenv(this)); ; // Promise closure
-                }.bindenv(this),
+                    }.bindenv(this)); // Promise closure
+                }.bindenv(this), // then onSuccess closure
                 function(errMsg) {
                     return "DELETE ITEM test failed:" + errMsg;
-                }.bindenv(this));
+                }.bindenv(this)); // then onFail & then closure
     }
 
     // Create a specific table called testTable wait for it to be created.
@@ -249,21 +247,18 @@ class DynamoDBPositiveTest extends ImpTestCase {
         local tblName     = "testTable";
         local expBatchNum = "1";
 
+        local scanParams = { "TableName": tblName };
         local PutRequest = {
             "Item": {
-                "deviceId"    : {"S" : imp.configparams.deviceid},
-                "time"        : {"S" : time().tostring()},
-                "batchNumber" : {"N" : expBatchNum}
+                "deviceId"    : { "S" : _deviceId },
+                "time"        : { "S" : time().tostring() },
+                "batchNumber" : { "N" : expBatchNum }
             }
         };
-
         local writeParams = {
-            "RequestItems" : { [tblName] = [{"PutRequest" : PutRequest}] }
+            "RequestItems" : { [tblName] = [ {"PutRequest" : PutRequest} ] }
         };
 
-        local scanParams = {"TableName": tblName};
-
-        // TODO: Look at creating table with unique name and let teardown delete all tables?
         return _createTable(tblName)
             .then(
                 function(msg) {
@@ -289,10 +284,10 @@ class DynamoDBPositiveTest extends ImpTestCase {
                             } catch(ex) {
                                 return reject("BATCH WRITE ITEM test failed: " + ex);
                             }
-                        }.bindenv(this));
-                    }.bindenv(this));
-                }.bindenv(this),
-                _onBatchWriteFail.bindenv(this))
+                        }.bindenv(this)); // SCAN closure
+                    }.bindenv(this)); // Promise closure
+                }.bindenv(this), // then onSuccess closure
+                _onBatchWriteFail.bindenv(this)) 
             .then(
                 function(msg) {
                     info(msg);
@@ -317,28 +312,27 @@ class DynamoDBPositiveTest extends ImpTestCase {
         local expItemTime2 = (time() + 1).tostring();
         local expBatchNum1 = "1";
         local expBatchNum2 = "2";
-        local deviceId     = imp.configparams.deviceid;
 
         local PutRequest1 = {
             "Item": {
-                "deviceId"    : {"S" : deviceId},
-                "time"        : {"S" : expItemTime1},
-                "batchNumber" : {"N" : expBatchNum1}
+                "deviceId"    : { "S" : _deviceId },
+                "time"        : { "S" : expItemTime1 },
+                "batchNumber" : { "N" : expBatchNum1 }
             }
         };
         local PutRequest2 = {
             "Item": {
-                "deviceId"    : {"S" : deviceId},
-                "time"        : {"S" : expItemTime2},
-                "batchNumber" : {"N" : expBatchNum2}
+                "deviceId"    : { "S" : _deviceId },
+                "time"        : { "S" : expItemTime2 },
+                "batchNumber" : { "N" : expBatchNum2 }
             }
         };
 
         local writeParams = {
             ["RequestItems"] = { 
                 [tblName] = [
-                    {["PutRequest"] = PutRequest1},
-                    {["PutRequest"] = PutRequest2}
+                    { ["PutRequest"] = PutRequest1 },
+                    { ["PutRequest"] = PutRequest2 }
                 ] 
             }
         };
@@ -347,14 +341,18 @@ class DynamoDBPositiveTest extends ImpTestCase {
             ["RequestItems"] = { 
                 [tblName] = {
                     ["Keys"] = [
-                        {["deviceId"] = {"S" : deviceId},
-                         ["time"]     = {"S" : expItemTime1}},
-                        {["deviceId"] = {"S" : deviceId},
-                         ["time"]     = {"S" : expItemTime2}}
-                    ]
-                }
-            }
-        };
+                        { 
+                            ["deviceId"] = { "S" : _deviceId },
+                            ["time"]     = { "S" : expItemTime1 }
+                        },
+                        { 
+                            ["deviceId"] = { "S" : _deviceId },
+                            ["time"]     = { "S" : expItemTime2 }
+                        }
+                    ] // Keys array closure
+                } // tblName table closure
+            } // Request items closure
+        }; // Get params closure
 
         // TODO: Look at creating table with unique name and let teardown delete all tables?
         return _createTable(tblName)
@@ -376,7 +374,6 @@ class DynamoDBPositiveTest extends ImpTestCase {
                     return Promise(function(resolve, reject) {
                         _db.action(AWS_DYNAMO_DB_ACTION_BATCH_GET_ITEM, getParams, function(bgiResp) {
                             local statuscode = bgiResp.statuscode;
-
                             if (!_respIsSuccessful(statuscode)) {
                                 local errMsg = _getRespErrMsg(bgiResp, "GET BATCH ITEM request failed. ");
                                 return reject(errMsg);
@@ -407,9 +404,9 @@ class DynamoDBPositiveTest extends ImpTestCase {
                             } catch(ex) {
                                 return reject("GET BATCH ITEM request failed: " + ex);
                             }
-                        }.bindenv(this));
-                    }.bindenv(this));
-                }.bindenv(this),
+                        }.bindenv(this)); // GET ITEM closure
+                    }.bindenv(this)); // Promise closure
+                }.bindenv(this), // then onSuccess closure
                 _onBatchGetFail.bindenv(this))
             .then(
                 function(msg) {
@@ -428,7 +425,6 @@ class DynamoDBPositiveTest extends ImpTestCase {
     // Test create a table, checks that the tablename, keyschema and
     // attribute definitions of created table match
     function testCreateTable() {
-
         local randNum = (1.0 * math.rand() / RAND_MAX) * (1000 + 1);
         local tblName = "testTable." + randNum;
 
@@ -484,7 +480,7 @@ class DynamoDBPositiveTest extends ImpTestCase {
         assertTrue(_dbConfigured, "DB is not configured. Aborting test.");
 
         return Promise(function(resolve, reject) {
-            local descParams = {"TableName": _tablename};
+            local descParams = { "TableName": _tablename };
 
             _db.action(AWS_DYNAMO_DB_ACTION_DESCRIBE_TABLE, descParams, function(resp) {
                 local statuscode = resp.statuscode;
@@ -507,7 +503,7 @@ class DynamoDBPositiveTest extends ImpTestCase {
 
                     return resolve("DESCRIBE TABLE test successful");
                 } catch (ex) {
-                    reject("DESCRIBE TABLE test failed: " + ex);
+                    return reject("DESCRIBE TABLE test failed: " + ex);
                 }
             }.bindenv(this)); // DESCRIBE TABLE closure
         }.bindenv(this)); // Promise closure
@@ -520,7 +516,7 @@ class DynamoDBPositiveTest extends ImpTestCase {
 
         local readCapUnits  = 6;
         local writeCapUnits = 6;
-
+        local descParams    = { "TableName" : _tablename };
         local updateParams = {
             "TableName"             : _tablename,
             "ProvisionedThroughput" : {
@@ -539,7 +535,6 @@ class DynamoDBPositiveTest extends ImpTestCase {
                 }.bindenv(this))
             .then(
                 function(msg) {
-                    local descParams = {"TableName" : _tablename};
                     return Promise(function(resolve, reject) {
                         _db.action(AWS_DYNAMO_DB_ACTION_DESCRIBE_TABLE, descParams, function(descResp) {
                             local statuscode = descResp.statuscode;
@@ -556,12 +551,12 @@ class DynamoDBPositiveTest extends ImpTestCase {
                             } catch(ex) {
                                 return reject("UPDATE TABLE test failed: " + ex);
                             }
-                        }.bindenv(this));
-                    }.bindenv(this));
-                }.bindenv(this),
+                        }.bindenv(this)); // DESCRIBE TABLE closure
+                    }.bindenv(this)); // Promise closure
+                }.bindenv(this), // then onSuccess closure
                 function(errMsg) {
                     return "UPDATE TABLE test failed: " + errMsg;
-                }.bindenv(this));
+                }.bindenv(this)); // then onFail closure
     }
 
     // creates a table then deletes it
@@ -571,10 +566,7 @@ class DynamoDBPositiveTest extends ImpTestCase {
     function testDeleteTable() {
         local randNum = (1.0 * math.rand() / RAND_MAX) * (1000 + 1);
         local tblName = "testTable." + randNum;
-
-        local params = {
-            "TableName": tblName
-        };
+        local params = { "TableName": tblName };
 
         return _createTable(tblName)
             .then(
@@ -588,6 +580,8 @@ class DynamoDBPositiveTest extends ImpTestCase {
             .then(
                 function(msg) {
                     info(msg);
+                    // Use _confirmActive helper with areDeleting flag (will return
+                    // success when request receive no table error response)
                     return _confirmActive(tblName, true);
                 }.bindenv(this),
                 function(errMsg) {
@@ -600,10 +594,10 @@ class DynamoDBPositiveTest extends ImpTestCase {
                 }.bindenv(this),
                 function(errMsg) {
                     return "DELETE TABLE test failed: " + errMsg;
-                }.bindenv(this))
+                }.bindenv(this));
     }
 
-    // tests the DescribeLimits function returns values for the provisioned
+    // Tests the DescribeLimits function returns values for the provisioned
     // capacity limits < 100
     function testDescribeLimits() {
         return Promise(function(resolve, reject) {
@@ -622,40 +616,40 @@ class DynamoDBPositiveTest extends ImpTestCase {
                 } catch (ex) {
                     return reject("DESCRIBE LIMITS test failed: " + ex);
                 }
-            }.bindenv(this));
-        }.bindenv(this));
+            }.bindenv(this)); // DESCRIBE LIMITS closure
+        }.bindenv(this)); // Promise closure
     }
 
-    // return an array of TableNames
-    // checks for _tablename is listed
+    // Checks for _tablename is returned by list tables action
     function testListTables() {
         assertTrue(_dbConfigured, "DB is not configured. Aborting test.");
 
         return _getTables()
             .then(
                 function(tblNames) {
-                    assertGreater(tblNames.len(), 0, "LIST TABLES request did not return any tables");
+                    local numTables  = tblNames.len();
                     local testTblIdx = tblNames.find(_tablename);
+
+                    assertGreater(numTables, 0, "LIST TABLES request did not return any tables");
                     assertTrue(_isNotNull(testTblIdx), "LIST TABLES request did not return test table");
+                    
                     return "LIST TABLES test successful";
                 }.bindenv(this), 
                 function(errMsg) {
                     return "LIST TABLES test failed: " + errMsg;
-                }.bindenv(this))
+                }.bindenv(this));
     }
 
-    // tests a query and checks that the retrieved values were aligned
+    // Tests a query and checks that the retrieved values were aligned
     function testQuery() {
         assertTrue(_dbConfigured, "DB is not configured. Aborting test.");
 
         return Promise(function(resolve, reject) {
-            local deviceId = imp.configparams.deviceid;
-
             local queryParams = {
                 "TableName"                 : _tablename,
                 "KeyConditionExpression"    : "deviceId = :deviceId",
                 "ExpressionAttributeValues" : {
-                    ":deviceId": {"S": deviceId}
+                    ":deviceId": { "S": _deviceId }
                 }
             };
 
@@ -668,23 +662,22 @@ class DynamoDBPositiveTest extends ImpTestCase {
 
                 try {
                     local devIdItem0 = http.jsondecode(resp.body).Items[0];
-                    assertEqual(devIdItem0, deviceId, "Device did not match query request");
+                    assertEqual(devIdItem0, _deviceId, "Device did not match query request");
                     return resolve("QUERY test successful");
                 } catch(ex) {
                     return resolve("QUERY test failed: " + ex);
                 }
-            }.bindenv(this));
-        }.bindenv(this));
+            }.bindenv(this)); // QUERY closure
+        }.bindenv(this)); // Promise closure
     }
 
-    // test the scan function returns both the correct value of deviceId
+    // Test the scan function returns both the correct value of deviceId
     // and only returns a single item as the table should only have 1 item.
     function testScan() {
         assertTrue(_dbConfigured, "DB is not configured. Aborting test.");
 
         return Promise(function(resolve, reject) {
-            local scanParams   = {"TableName": _tablename};
-            local deviceId     = imp.configparams.deviceid;
+            local scanParams   = { "TableName": _tablename };
             local expScanCount = 1;
 
             _db.action(AWS_DYNAMO_DB_ACTION_SCAN, scanParams, function(scanResp) {
@@ -699,32 +692,33 @@ class DynamoDBPositiveTest extends ImpTestCase {
                     local scanDevId = body.Items[0].deviceId.S;
                     local scanCount = body.ScannedCount;
 
-                    assertEqual(deviceId, scanDevId, "Received unexpected device id: " + scanDevId);
+                    assertEqual(_deviceId, scanDevId, "Received unexpected device id: " + scanDevId);
                     assertEqual(expScanCount, scanCount, "Received unexpected scan count: " + scanCount);
                     return resolve("SCAN test successful");
                 } catch(ex) {
                     return reject("SCAN test failed: " + ex);
                 }
-            }.bindenv(this));
-        }.bindenv(this));
+            }.bindenv(this)); // SCAN closure
+        }.bindenv(this)); // Promise closure
     }
 
     // Deletes all table(s) used throughout the tests
     function tearDown() {
-        // Delete all DB tables
         return _getTables().then(_clearDB.bindenv(this), _onDBCleanupFail.bindenv(this));
     }
 
     // Helper functions that return Promises
     // --------------------------------------------------------------------
 
+    // Makes PUT ITEM request with default params
+    // Returns a promise that resolves/rejects with a message base on request statuscode
     function _putItem(expectedItemTime) {
         local putParams = {
             "TableName" : _tablename,
             "Item"      : {
-                "deviceId" : {"S" : imp.configparams.deviceid},
-                "time"     : {"S" : expectedItemTime},
-                "status"   : {"BOOL" : true}
+                "deviceId" : { "S" : _deviceId },
+                "time"     : { "S" : expectedItemTime },
+                "status"   : { "BOOL" : true }
             }
         };
 
@@ -736,13 +730,16 @@ class DynamoDBPositiveTest extends ImpTestCase {
                     return reject(errMsg);
                 }
                 return resolve("GET ITEM test successful");
-            }.bindenv(this));
-        }.bindenv(this));
+            }.bindenv(this)); // PUT ITEM closure
+        }.bindenv(this)); // Promise closure
     }
 
+    // Makes LIST TABLES request with default params
+    // Returns a promise that resolves with array of table names or rejects with error message
     function _getTables() {
-        return Promise(function (resolve, reject) {
-            local reqParams = { "ExclusiveStartTableName": "testTable" };
+        local reqParams = { "ExclusiveStartTableName": "testTable" };
+
+        return Promise(function (resolve, reject) {    
             _db.action(AWS_DYNAMO_DB_ACTION_LIST_TABLES, reqParams, function(resp) {
                 try {
                     local statuscode = resp.statuscode;
@@ -758,15 +755,18 @@ class DynamoDBPositiveTest extends ImpTestCase {
                     local errMsg = "Caught exception processing list of tables resonse: " + ex;
                     return reject(errMsg);
                 }
-            }.bindenv(this));
-        }.bindenv(this));
+            }.bindenv(this)); // LIST TABLES closure
+        }.bindenv(this)); // Promise closure
     }
 
+    // Confirms table is active, then makes a request to delete
+    // Returns a promise that resolves/rejects with a message base on request statuscode
     function _deleteTable(tblName) {
         info("Starting ACTIVE check and delete for table: " + tblName);
+        local reqParams = { "TableName" : tblName };
+
         // Don't resolve until retries have completed
         return Promise(function(resolve, reject) {
-            local reqParams = { "TableName" : tblName };
             // Loop to check that table is active
             _checkTableIsActive(reqParams, AWS_DYNAMO_TEST_ACTIVE_TBL_RETRIES, true, function(errMsg) {
                 if (errMsg != null) return reject(errMsg);
@@ -774,32 +774,33 @@ class DynamoDBPositiveTest extends ImpTestCase {
                 // Delete table
                 _db.action(AWS_DYNAMO_DB_ACTION_DELETE_TABLE, reqParams, function(resp) {
                     local statuscode = resp.statuscode;
-
                     if (!_respIsSuccessful(statuscode)) {
                         // Create error if request was unsuccessful
                         local err = _getRespErrMsg(resp, "Delete table request failed. ");
                         return reject(err);
                     }
 
-                    local successMsg = tblName + " table successfully deleted";
-                    return resolve(successMsg);
-                }.bindenv(this));
-            }.bindenv(this));
-        }.bindenv(this))
+                    return resolve(tblName + " table successfully deleted");
+                }.bindenv(this)); // DELETE TABLE closure
+            }.bindenv(this)); // _checkTableIsActive closure
+        }.bindenv(this)); // Promise closure
     }
 
+    // Creates a table with default the given table name and defualt params
+    // Returns a promise that resolves/rejects with a message base on request statuscode
     function _createTable(tblName) {
-        return Promise(function(resolve, reject) {
-            local reqParams = {
-                "AttributeDefinitions"  : _AttributeDefinitions,
-                "KeySchema"             : _KeySchema,
-                "ProvisionedThroughput" : _ProvisionedThroughput,
-                "TableName"             : tblName
-            };
+        info("Creating test db: " + tblName);
+        local checkParams = { "TableName": tblName };
+        local createParams = {
+            "AttributeDefinitions"  : _AttributeDefinitions,
+            "KeySchema"             : _KeySchema,
+            "ProvisionedThroughput" : _ProvisionedThroughput,
+            "TableName"             : tblName
+        };
 
-            info("Creating test db: " + tblName);
+        return Promise(function(resolve, reject) {
             // Create a table with random name per test testTable.randNum
-            _db.action(AWS_DYNAMO_DB_ACTION_CREATE_TABLE, reqParams, function (resp) {
+            _db.action(AWS_DYNAMO_DB_ACTION_CREATE_TABLE, createParams, function (resp) {
                 local statuscode = resp.statuscode;
                 // Handle unsuccessful response
                 info("CREATE TABLE resp status code: " + statuscode);
@@ -808,25 +809,26 @@ class DynamoDBPositiveTest extends ImpTestCase {
                     return reject(errMsg);
                 }
 
-                local checkParams = {
-                    "TableName": tblName
-                };
-
                 // Wait and check DB for table to become ACTIVE
                 imp.wakeup(AWS_DYNAMO_TEST_ACTIVE_TIMEOUT, function() {
                     _checkTableIsActive(checkParams, AWS_DYNAMO_TEST_ACTIVE_TBL_RETRIES, false, function(errMsg) {
                         return (errMsg == null) ? resolve(tblName + " table CREATED and ACTIVE") : reject(errMsg);
-                    }.bindenv(this));
-                }.bindenv(this));
-            }.bindenv(this));
-        }.bindenv(this));
+                    }.bindenv(this)); // _checkTableIsActive callback closure
+                }.bindenv(this)); // imp.wakeup closure
+            }.bindenv(this)); // CREATE TABLE closure
+        }.bindenv(this)); // Promise closure
     }
 
+    // Deletes all tables one at a time, then creates a new default table & confirms table is active  
+    // Returns a promise that resolves/rejects with a message
     function _clearAndConfigure(tblNames) {
         local tasks = _createDelQueue(tblNames);
         return Promise.serial(tasks).then(_configureTestDB.bindenv(this), _onDBCleanupFail.bindenv(this));
     }
 
+    // Creates a table with a random number in the name, confirms table is active, if 
+    // creation is successful toggles _dbConfigured flag to true
+    // Returns a promise that resolves/rejects with a setup message 
     function _configureTestDB(msg) {
         // Parameter "msg" is a message from last task promise that resolved
 
@@ -847,6 +849,8 @@ class DynamoDBPositiveTest extends ImpTestCase {
                 }.bindenv(this));
     }
 
+    // Deletes all tables one at a time, then clears the _dbConfigured flag and the Dynamo DB instance
+    // Returns a promise that resolves/rejects with a message 
     function _clearDB(tblNames) {
         local tasks = _createDelQueue(tblNames);
         return Promise.serial(tasks)
@@ -854,52 +858,62 @@ class DynamoDBPositiveTest extends ImpTestCase {
                 function(msg) { 
                     info(msg);
                     // Parameter "msg" is a message from last task promise that resolved
+                    _dbConfigured = false;
                     _db = null;
                     return "DB tables deleted, teardown for @{__FILE__} tests complete"; 
                 }.bindenv(this), 
                 _onDBCleanupFail.bindenv(this));        
     }
 
+    // A loop that checks for a table to be ACTIVE (or no longer in database if areDeleting flag is toggled)
+    // Returns a promise that resolves/rejects with a message 
     function _confirmActive(tblName, areDeleting = false) {
-        local checkParams = {
-            "TableName": tblName
-        };
+        local checkParams = { "TableName": tblName };
 
         return Promise(function(resolve, reject) {
             _checkTableIsActive(checkParams, AWS_DYNAMO_TEST_ACTIVE_TBL_RETRIES, areDeleting, function(errMsg) {
                 // NOTE: if areDeleting flag is set to true the table might already be deleted, and not active
                 return (errMsg == null) ? resolve("Table is ACTIVE or DELETED") : reject(errMsg);
-            }.bindenv(this)); 
-        }.bindenv(this))        
+            }.bindenv(this)); // _checkTableIsActive callback closure
+        }.bindenv(this)); // Promise closure
     }
 
+    // Makes BATCH WRITE ITEM request with specified params
+    // Returns a promise that resolves/rejects with a message based on request statuscode
     function _writeBatchItem(writeParams) {
         return Promise(function(resolve, reject) {
             _db.action(AWS_DYNAMO_DB_ACTION_BATCH_WRITE_ITEM, writeParams, function(bwiResp) {
                 local statuscode = bwiResp.statuscode;
-                return (_respIsSuccessful(statuscode)) ? resolve("BATCH WRITE request successful") : reject("BATCH WRITE request failed: " + statuscode);
-            }.bindenv(this));
-        }.bindenv(this));
+                if (!_respIsSuccessful(statuscode)) {
+                    local errMsg = _getRespErrMsg(bwiResp, "BATCH WRITE request failed. ");
+                    return reject(errMsg);
+                }
+
+                return resolve("BATCH WRITE request successful");
+            }.bindenv(this)); // BATCH WRITE closure
+        }.bindenv(this)); // Promise closure
     }
 
+    // Makes UPDATE TABLE request with specified params
+    // Returns a promise that resolves/rejects with a message based on request statuscode
     function _updateTable(updateParams) {
         return Promise(function(resolve, reject) {
             _db.action(AWS_DYNAMO_DB_ACTION_UPDATE_TABLE, updateParams, function(updateResp) {
                 local statuscode = updateResp.statuscode;
-
                 if (!_respIsSuccessful(statuscode)) {
                     local errMsg = _getRespErrMsg(resp, "UPDATE TABLE " + _tablename + " request failed. ");
                     return reject(errMsg);
                 }
 
                 return resolve("UPDATE TABLE request successful");
-            }.bindenv(this));
-        }.bindenv(this));
+            }.bindenv(this)); // UPDATE TABLE closure
+        }.bindenv(this)); // Promise closure
     }
 
     // // Helper functions
     // // --------------------------------------------------------------------
 
+    // Toggles _dbConfigured to false returns error message
     function _onDBCleanupFail(errMsg) {
         // Setup failed. Clear DB instance, so we don't bother running any tests.
         _dbConfigured = false;
@@ -907,14 +921,17 @@ class DynamoDBPositiveTest extends ImpTestCase {
         return errMsg;
     }
 
+    // Returns updated error message
     function _onBatchWriteFail(errMsg) {
         return "BATCH WRITE ITEM test failed: " + errMsg;
     }
 
+    // Returns updated error message
     function _onBatchGetFail(errMsg) {
         return "BATCH GET ITEM test failed: " + errMsg;
     }
 
+    // Creates & returns an array of _delete table promises
     function _createDelQueue(tblNames) {
         local numTbls = tblNames.len();
         local tasks = [];
@@ -936,15 +953,17 @@ class DynamoDBPositiveTest extends ImpTestCase {
         return tasks;
     }
 
-    // Loop that checks that a table is ACTIVE
+    // Loop for specified number of times, checking that a table is ACTIVE (or if table no longer exists)
     function _checkTableIsActive(reqParams, ctr, areDeleting, onDone) {
         _db.action(AWS_DYNAMO_DB_ACTION_DESCRIBE_TABLE, reqParams, function(resp) {
             local statuscode = resp.statuscode;
             if (!_respIsSuccessful(statuscode)) {
-                // TODO: If too many requests error continues to be an issue add a check/handle
+                // TODO: If too many requests error continues to be an issue, add a check/handle
                 // error "The rate of control plane requests made by this account is too high"
 
+                // Create error message
                 local errMsg = _getRespErrMsg(resp, "Describe table request failed. ");
+                // Check for areDeleting condition
                 if (areDeleting && statuscode == AWS_DYNAMO_TEST_HTTP_STATUS_CODE.BAD_REQUEST 
                     && errMsg.find(AWS_DYNAMO_TEST_ERROR.TABLE_NOT_FOUND) != null) {
                     // Trigger success flow if we were trying to delete the table
@@ -984,11 +1003,13 @@ class DynamoDBPositiveTest extends ImpTestCase {
         }.bindenv(this));
     }
 
+    // Returns boolean if status code is in the successful range
     function _respIsSuccessful(statuscode) {
         return (statuscode >= AWS_DYNAMO_TEST_HTTP_STATUS_CODE.SUCCESS_LOWER_BOUND && 
                 statuscode < AWS_DYNAMO_TEST_HTTP_STATUS_CODE.SUCCESS_UPPER_BOUND);
     }
 
+    // Parses response to create and return an error message
     function _getRespErrMsg(resp, baseMsg = "Dynamo DB request failed. ") {
         local errMsg = baseMsg + "Statuscode: " + resp.statuscode;
         try {
@@ -1000,6 +1021,7 @@ class DynamoDBPositiveTest extends ImpTestCase {
         return errMsg;
     }
 
+    // Returns boolean if parameter is not equal to `null`
     function _isNotNull(item) {
         return (item != null);
     }
